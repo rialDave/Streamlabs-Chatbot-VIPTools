@@ -56,6 +56,12 @@ def Init():
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
 
+    Log('in init')
+
+    # for debugging purposes: log available methods from Parent object
+    for method_name in dir(Parent):
+        Log(method_name)
+
     return
 
 #---------------------------
