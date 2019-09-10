@@ -30,19 +30,25 @@ Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
 Version = "0.0.1-dev"
-CommandListVips = "!listvips"
-# CommandVIPCheckIn = "!vipcheckin"
-VariableChannelName = "$channelName"
-VariableVipList = "$vips"
-Response = "The current VIPs of " + VariableChannelName + " are: " + VariableVipList
-ChannelId = "159000697"
-AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 
 #---------------------------
 #   Define Global Variables
 #---------------------------
 vipdataFile = os.path.join('data', 'vipdata.json')
 vipdataFilepath = os.path.join(os.path.dirname(__file__), vipdataFile)
+
+VariableChannelName = "$channelName"
+VariableVipList = "$vips"
+VariableUser = "$user"
+VariableCheckInCount = "$checkInCount"
+VariableCheckInCountReadable = "$checkInCountReadable"
+VariableNeededCheckins = "$neededCheckIns"
+CommandListVips = "!listvips"
+ResponseListVips = "The current VIPs of " + VariableChannelName + " are: " + VariableVipList
+CommandVIPCheckIn = "!vipcheckin"
+ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + VariableCheckInCountReadable + " time in a row! Status: " + VariableCheckInCount + "/" + VariableNeededCheckins
+ChannelId = "159000697"
+AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 
 # Configuration of keys in json file
 # tbd
@@ -57,11 +63,8 @@ def Init():
         data = {}
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
-
-    Log('in init')
-
+    
     lastStreamDate = GetLastStreamDate()
-    Log(lastStreamDate)
 
     return
 
@@ -69,9 +72,14 @@ def Init():
 #   [Required] Execute Data / Process messages
 #---------------------------
 def Execute(data):
-    Log('in execute')
+
+    # call parse function if any of our defined commands is called
     if data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips:
-        ParsedResponse = Parse(Response) # Parse response first
+        ParsedResponse = Parse(ResponseListVips, CommandListVips) # Parse response first
+        Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
+
+    if data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn:
+        ParsedResponse = Parse(ResponseVIPCheckIn, CommandVIPCheckIn) # Parse response first
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
 
     return
@@ -91,9 +99,14 @@ def Tick():
 #
 # ORIGINAL DEF: def Parse(parseString, userid, username, targetid, targetname, message):
 #---------------------------
-def Parse(parseString):
+def Parse(parseString, command):
     Log('in parse')
 
+    if (command == CommandVIPCheckIn):
+        Log('last stream date: ' + GetLastStreamDate())
+
+    if (command == CommandListVips):
+        Log('in parse for CommandListVips')
 
     # after every necessary variable was processed: return the whole parseString
     return parseString
