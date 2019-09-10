@@ -1,4 +1,4 @@
-Streamlabs-Chatbot-Randombeer
+Streamlabs-Chatbot-VIPTools
 =============================
 
 A Python Script for Streamlabs Chatbot with some additional features for the (new) Twitch "VIP" role.
