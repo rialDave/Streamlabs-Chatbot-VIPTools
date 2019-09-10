@@ -60,11 +60,8 @@ def Init():
 
     Log('in init')
 
-    # for debugging purposes: log available methods from Parent object
-    for method_name in dir(Parent):
-        Log(method_name)
-
-    Log(GetLastStreamDate)
+    lastStreamDate = GetLastStreamDate()
+    Log(lastStreamDate)
 
     return
 
@@ -130,8 +127,14 @@ def Log(message):
 #   Gets date of last stream for channel
 #---------------------------
 def GetLastStreamDate():
-	requestUrl = "https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?client_id=" + AppClientId
-    lastStream = Parent.GetRequest(requestUrl)
-    lastStreamArray = json.loads(lastStream)
+    requestUrl = "https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId
+    lastStream = Parent.GetRequest(requestUrl, {})
+    parsedLastStream = json.loads(lastStream)
+    dataResponse = parsedLastStream["response"] # str
+    parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
+    dataVideos = parsedDataResponse.get("videos") # list
 
-    return lastStreamArray['videos']['created_at']
+    for item in dataVideos: # item = dict in dataVideos = list
+        dataCreatedAt = item.get("created_at")
+
+    return dataCreatedAt
