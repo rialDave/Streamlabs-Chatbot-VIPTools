@@ -35,6 +35,8 @@ CommandListVips = "!listvips"
 VariableChannelName = "$channelName"
 VariableVipList = "$vips"
 Response = "The current VIPs of " + VariableChannelName + " are: " + VariableVipList
+ChannelId = "159000697"
+AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 
 #---------------------------
 #   Define Global Variables
@@ -61,6 +63,8 @@ def Init():
     # for debugging purposes: log available methods from Parent object
     for method_name in dir(Parent):
         Log(method_name)
+
+    Log(GetLastStreamDate)
 
     return
 
@@ -93,6 +97,7 @@ def Tick():
 def Parse(parseString):
     Log('in parse')
 
+
     # after every necessary variable was processed: return the whole parseString
     return parseString
 
@@ -120,3 +125,13 @@ def ScriptToggled(state):
 def Log(message):
     Parent.Log(ScriptName, message)
     return
+
+#---------------------------
+#   Gets date of last stream for channel
+#---------------------------
+def GetLastStreamDate():
+	requestUrl = "https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?client_id=" + AppClientId
+    lastStream = Parent.GetRequest(requestUrl)
+    lastStreamArray = json.loads(lastStream)
+
+    return lastStreamArray['videos']['created_at']
