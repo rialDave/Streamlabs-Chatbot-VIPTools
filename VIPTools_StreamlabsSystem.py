@@ -32,7 +32,7 @@ Creator = "rialDave"
 Version = "0.0.1-dev"
 
 #---------------------------
-#   Define Global Variables
+#   Global Variables
 #---------------------------
 vipdataFile = os.path.join('data', 'vipdata.json')
 vipdataFilepath = os.path.join(os.path.dirname(__file__), vipdataFile)
@@ -43,12 +43,21 @@ VariableUser = "$user"
 VariableCheckInCount = "$checkInCount"
 VariableCheckInCountReadable = "$checkInCountReadable"
 VariableNeededCheckins = "$neededCheckIns"
+ChannelId = "159000697"
+AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
+
+# Configuration of keys in json file
+JSONVariablesCheckInsInARow = "check_ins_in_a_row"
+JSONVariablesLastCheckIn = "last_check_in"
+
+#---------------------------
+#   Settings
+#---------------------------
+
 CommandListVips = "!listvips"
 ResponseListVips = "The current VIPs of " + VariableChannelName + " are: " + VariableVipList
 CommandVIPCheckIn = "!vipcheckin"
 ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + VariableCheckInCountReadable + " time in a row! Status: " + VariableCheckInCount + "/" + VariableNeededCheckins
-ChannelId = "159000697"
-AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 
 # Configuration of keys in json file
 # tbd
@@ -74,12 +83,12 @@ def Init():
 def Execute(data):
 
     # call parse function if any of our defined commands is called
-    if data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips:
-        ParsedResponse = Parse(ResponseListVips, CommandListVips) # Parse response first
+    if data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn:
+        ParsedResponse = Parse(ResponseVIPCheckIn, CommandVIPCheckIn, data) # Parse response
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
 
-    if data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn:
-        ParsedResponse = Parse(ResponseVIPCheckIn, CommandVIPCheckIn) # Parse response first
+    if data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips:
+        ParsedResponse = Parse(ResponseListVips, CommandListVips, data) # Parse response
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
 
     return
@@ -99,11 +108,18 @@ def Tick():
 #
 # ORIGINAL DEF: def Parse(parseString, userid, username, targetid, targetname, message):
 #---------------------------
-def Parse(parseString, command):
+def Parse(parseString, command, data):
     Log('in parse')
 
     if (command == CommandVIPCheckIn):
-        Log('last stream date: ' + GetLastStreamDate())
+        if (True == IsNewStream(data.User)):
+            parseString = data.User + ' just checked in for this stream! Current streak: ' + GetStreak(data.User)
+            UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
+
+        else:
+            UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
+            parseString = data.User + ' already checked in for this stream. Come join again the next time! Current streak: ' + GetStreak(data.User)
+
 
     if (command == CommandListVips):
         Log('in parse for CommandListVips')
@@ -133,7 +149,7 @@ def ScriptToggled(state):
 #   Log helper
 #---------------------------
 def Log(message):
-    Parent.Log(ScriptName, message)
+    Parent.Log(ScriptName, str(message))
     return
 
 #---------------------------
@@ -151,3 +167,81 @@ def GetLastStreamDate():
         dataCreatedAt = item.get("created_at")
 
     return dataCreatedAt
+
+#---------------------------
+#   UpdateDataFile: Function for modfiying the file which contains the data, see data/vipdata.json
+#---------------------------
+def UpdateDataFile(username):
+    currentday = GetCurrentDayFormattedDate()
+
+    # this loads the data of file vipdata.json into variable "data"
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        # check if the given username exists in data. -> user doesnt exist yet, create array of the user data, which will be stored in vipdata.json
+        if str(username.lower()) not in data:
+            data[str(username.lower())] = {}
+            data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
+            data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+
+        # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
+        else:
+            # new stream since last checkIn?
+            if (True == IsNewStream(username)):
+                data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
+                data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+
+            # same day since last check in? -> do nothing, should send a info message in the future
+            #else:
+                # tbd
+
+    # after everything was modified and updated, we need to write the stuff from our "data" variable to the beerdata.json file 
+    os.remove(vipdataFilepath)
+    with open(vipdataFilepath, 'w') as f:
+        json.dump(data, f, indent=4)
+
+    return
+
+#---------------------------
+#   returns bool if it is a new stream or not
+#   
+#   todo: would be better to check if it's a new stream, instead of a new day (maybe we can save the stream-id or sth in the dataFile instead of the date)
+#   atm it would be possible to just gather check ins whenever you call it in a stream (doesn't need to be in a row of streams)
+#---------------------------
+def IsNewStream(username):
+    currentday = GetCurrentDayFormattedDate()
+    newStream = False
+
+    # this loads the data of file vipdata.json into variable "data"
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        if str(username.lower()) not in data:
+            newStream = True
+        else:
+            if currentday != data[str(username.lower())][JSONVariablesLastCheckIn]:
+                newStream = True
+
+    return newStream
+
+#---------------------------
+#   returns the formatted date of current day 
+#---------------------------
+def GetCurrentDayFormattedDate():
+    currenttimestamp = int(time.time())
+    return datetime.fromtimestamp(currenttimestamp).strftime('%Y-%m-%d')
+
+#---------------------------
+#   returns the string formatted streak (still hardcoded)
+#---------------------------
+def GetStreak(username):
+
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        if str(username.lower()) not in data:
+            streak = "1/30"
+        else:
+            streak = str(data[str(username.lower())][JSONVariablesCheckInsInARow]) + "/30"
+
+    return streak
