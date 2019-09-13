@@ -31,6 +31,12 @@ Changelog
 
   * initial Build and commit
 
+**v0.1.0**
+
+  * Released first working version with correct stream comparison
+  * Added some QoL stuff, especially code cleanup and some additional chat responses (still hardcoded)
+  * (Jokers to be added in one of the next releases)
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
