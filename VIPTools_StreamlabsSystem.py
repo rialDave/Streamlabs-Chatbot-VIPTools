@@ -73,7 +73,7 @@ def Init():
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
     
-    lastStreamDate = GetLastStreamDate()
+    lastStreamId = GetLastStreamId()
 
     return
 
@@ -153,20 +153,19 @@ def Log(message):
     return
 
 #---------------------------
-#   Gets date of last stream for channel
+#   Gets stream id of last stream for channel
 #---------------------------
-def GetLastStreamDate():
-    requestUrl = "https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId
-    lastStream = Parent.GetRequest(requestUrl, {})
+def GetLastStreamId():
+    lastStream = GetTwitchApiResponse(str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId)
     parsedLastStream = json.loads(lastStream)
     dataResponse = parsedLastStream["response"] # str
     parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
     dataVideos = parsedDataResponse.get("videos") # list
 
     for item in dataVideos: # item = dict in dataVideos = list
-        dataCreatedAt = item.get("created_at")
+        streamId = item.get("id")
 
-    return dataCreatedAt
+    return streamId
 
 #---------------------------
 #   UpdateDataFile: Function for modfiying the file which contains the data, see data/vipdata.json
@@ -245,3 +244,12 @@ def GetStreak(username):
             streak = str(data[str(username.lower())][JSONVariablesCheckInsInARow]) + "/30"
 
     return streak
+
+#---------------------------
+#   returns the response from api request
+#---------------------------
+def GetTwitchApiResponse(url):
+	headers = {
+         {'Accept': 'application/vnd.twitchtv.v5+json'}
+    }
+    return Parent.GetRequest(url, headers)
