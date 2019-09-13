@@ -49,6 +49,11 @@ AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 # Configuration of keys in json file
 JSONVariablesCheckInsInARow = "check_ins_in_a_row"
 JSONVariablesLastCheckIn = "last_check_in"
+JSONVariablesLastCheckInStreamId = "last_check_in_streamid"
+
+# Configuration of twitch api urls
+ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId)
+ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
 #   Settings
@@ -73,7 +78,8 @@ def Init():
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
     
-    lastStreamId = GetLastStreamId()
+    Log(GetLastStreamId())
+    #Log(GetCurrentStreamId())
 
     return
 
@@ -83,11 +89,17 @@ def Init():
 def Execute(data):
 
     # call parse function if any of our defined commands is called
-    if data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn:
+    if (data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn):
+        currentStreamObjectStorage = GetTwitchApiResponse(ApiUrlCurrentStream)
+        currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
+        if (currentStreamObject == None):
+            Parent.SendStreamMessage("ERROR: This command is only available, when the stream is live. Sorry!")
+            return
+
         ParsedResponse = Parse(ResponseVIPCheckIn, CommandVIPCheckIn, data) # Parse response
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
 
-    if data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips:
+    if (data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips):
         ParsedResponse = Parse(ResponseListVips, CommandListVips, data) # Parse response
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
 
@@ -156,16 +168,19 @@ def Log(message):
 #   Gets stream id of last stream for channel
 #---------------------------
 def GetLastStreamId():
-    lastStream = GetTwitchApiResponse(str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId)
-    parsedLastStream = json.loads(lastStream)
-    dataResponse = parsedLastStream["response"] # str
-    parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
-    dataVideos = parsedDataResponse.get("videos") # list
+    lastVideosObjectStorage = GetTwitchApiResponse(ApiUrlLastStream)
+    lastVideoObject = GetFirstVideoOfVideoObjectStorage(lastVideosObjectStorage)
+    lastStreamId = lastVideoObject.get("broadcast_id")
 
-    for item in dataVideos: # item = dict in dataVideos = list
-        streamId = item.get("id")
+    return lastStreamId
 
-    return streamId
+def GetCurrentStreamId():
+    
+    currentStreamObjectStorage = GetTwitchApiResponse(ApiUrlCurrentStream)
+    currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
+    currentStreamId = currentStreamObject.get("_id")
+
+    return currentStreamId
 
 #---------------------------
 #   UpdateDataFile: Function for modfiying the file which contains the data, see data/vipdata.json
@@ -182,6 +197,7 @@ def UpdateDataFile(username):
             data[str(username.lower())] = {}
             data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
             data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+            data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
 
         # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
         else:
@@ -189,6 +205,7 @@ def UpdateDataFile(username):
             if (True == IsNewStream(username)):
                 data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
                 data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+                data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
 
             # same day since last check in? -> do nothing, should send a info message in the future
             #else:
@@ -208,18 +225,13 @@ def UpdateDataFile(username):
 #   atm it would be possible to just gather check ins whenever you call it in a stream (doesn't need to be in a row of streams)
 #---------------------------
 def IsNewStream(username):
-    currentday = GetCurrentDayFormattedDate()
     newStream = False
 
     # this loads the data of file vipdata.json into variable "data"
     with open(vipdataFilepath, 'r') as f:
         data = json.load(f)
 
-        if str(username.lower()) not in data:
-            newStream = True
-        else:
-            if currentday != data[str(username.lower())][JSONVariablesLastCheckIn]:
-                newStream = True
+        lastStreamId = GetLastStreamId()
 
     return newStream
 
@@ -249,7 +261,45 @@ def GetStreak(username):
 #   returns the response from api request
 #---------------------------
 def GetTwitchApiResponse(url):
-	headers = {
-         {'Accept': 'application/vnd.twitchtv.v5+json'}
-    }
+    headers = {'Accept': 'application/vnd.twitchtv.v5+json'}
     return Parent.GetRequest(url, headers)
+
+#---------------------------
+#   helper class to log all variables of last stream object (debugging)
+#---------------------------
+def LogAllVariablesOfVideoObject(videoObject):
+    for attributes in videoObject:
+        Log(attributes)
+
+    return
+
+#---------------------------
+#   GetPropertyValueOfStreamObject
+#---------------------------
+def GetPropertyValueOfStreamObject(streamObject, property):
+    dataVideos = GetVideosFromStreamObject(streamObject)
+    Log(dataVideos)
+
+    for item in dataVideos: # item = dict in dataVideos = list // this only works because "dataVideos" it's limited to 1 video object
+        propertyValue = item.get(property)
+
+    return propertyValue
+
+#---------------------------
+#   GetFirstVideoOfVideoObjectStorage
+#---------------------------
+def GetFirstVideoOfVideoObjectStorage(videoObjectStorage):
+    parsedLastVideo = json.loads(videoObjectStorage)
+    dataResponse = parsedLastVideo["response"] # str
+    parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
+    videosList = parsedDataResponse.get("videos") # list
+    return videosList[0] # dict
+
+#---------------------------
+#   GetStreamObjectByObjectStorage
+#---------------------------
+def GetStreamObjectByObjectStorage(streamObjectStorage):
+    parsedStreamObjectStorage = json.loads(streamObjectStorage)
+    dataResponse = parsedStreamObjectStorage["response"] # str
+    parsedDataResponse = json.loads(dataResponse) # dict
+    return parsedDataResponse.get("stream")

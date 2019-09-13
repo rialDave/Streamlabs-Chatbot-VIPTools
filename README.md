@@ -34,8 +34,9 @@ Changelog
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
-  * Viewers can send a command to the chat once day / stream and after X ongoing "check ins" with this command they will be rewarded the VIP status
+  * Viewers can send a command to the chat once day / stream and after X ongoing "check ins" with this command they will be rewarded the VIP status (manually)
   * Maybe there could be something like joker: Let's say a user has 2 joker which will be used when he doesn't check in within the next stream in a row. After the joker count hits 0 he loses his collected streak.
+  * <s>Prevent command from being called when the stream isn't live (can't get stream object stuff)</s>
   * Replace "in a row" with dynamic response (only if it's more then 1 checkIn in a row)
   * Viewers can list all current VIPs via command and the current max number of VIPs for the channel (this is limited by twitch in different stages, see: https://help.twitch.tv/s/article/Managing-Roles-for-your-Channel#faq) 
   * If a viewer reaches the necessary goal it will 1. set to "active vip status" in the data file of the script and 2. automatically set to VIP for the channel (only the streamer account can do this, so the script needs to send a command as streamer in the chat. Needs to be researched if this is possible)
