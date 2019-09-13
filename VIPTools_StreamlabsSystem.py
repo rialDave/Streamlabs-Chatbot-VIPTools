@@ -79,7 +79,7 @@ def Init():
             json.dump(data, f, indent=4)
     
     Log(GetLastStreamId())
-    #Log(GetCurrentStreamId())
+    Log(GetCurrentStreamId())
 
     return
 
@@ -124,6 +124,11 @@ def Parse(parseString, command, data):
     Log('in parse')
 
     if (command == CommandVIPCheckIn):
+        if (True == IsNewUser(data.User)):
+            parseString = "Congratulations for you first check in, " + data.User + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! Current streak: " + GetStreak(data.User)
+            UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
+            return parseString
+
         if (True == IsNewStream(data.User)):
             parseString = data.User + ' just checked in for this stream! Current streak: ' + GetStreak(data.User)
             UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
@@ -174,6 +179,9 @@ def GetLastStreamId():
 
     return lastStreamId
 
+#---------------------------
+#   Gets stream id of current stream for channel
+#---------------------------
 def GetCurrentStreamId():
     
     currentStreamObjectStorage = GetTwitchApiResponse(ApiUrlCurrentStream)
@@ -193,7 +201,7 @@ def UpdateDataFile(username):
         data = json.load(f)
 
         # check if the given username exists in data. -> user doesnt exist yet, create array of the user data, which will be stored in vipdata.json
-        if str(username.lower()) not in data:
+        if (True == IsNewUser(username)):
             data[str(username.lower())] = {}
             data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
             data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
@@ -231,7 +239,11 @@ def IsNewStream(username):
     with open(vipdataFilepath, 'r') as f:
         data = json.load(f)
 
-        lastStreamId = GetLastStreamId()
+        lastCheckInStreamId = data[str(username.lower())][JSONVariablesLastCheckInStreamId]
+        currentStreamId = GetCurrentStreamId()
+
+        if (currentStreamId != lastCheckInStreamId):
+            return True
 
     return newStream
 
@@ -274,18 +286,6 @@ def LogAllVariablesOfVideoObject(videoObject):
     return
 
 #---------------------------
-#   GetPropertyValueOfStreamObject
-#---------------------------
-def GetPropertyValueOfStreamObject(streamObject, property):
-    dataVideos = GetVideosFromStreamObject(streamObject)
-    Log(dataVideos)
-
-    for item in dataVideos: # item = dict in dataVideos = list // this only works because "dataVideos" it's limited to 1 video object
-        propertyValue = item.get(property)
-
-    return propertyValue
-
-#---------------------------
 #   GetFirstVideoOfVideoObjectStorage
 #---------------------------
 def GetFirstVideoOfVideoObjectStorage(videoObjectStorage):
@@ -303,3 +303,16 @@ def GetStreamObjectByObjectStorage(streamObjectStorage):
     dataResponse = parsedStreamObjectStorage["response"] # str
     parsedDataResponse = json.loads(dataResponse) # dict
     return parsedDataResponse.get("stream")
+
+#---------------------------
+#   IsNewUser
+#---------------------------
+def IsNewUser(username):
+    # this loads the data of file vipdata.json into variable "data"
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        if str(username.lower()) not in data:
+            return True
+        else:
+            return False
