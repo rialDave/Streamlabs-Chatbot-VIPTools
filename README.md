@@ -37,11 +37,17 @@ Changelog
   * Added some QoL stuff, especially code cleanup and some additional chat responses (still hardcoded)
   * (Jokers to be added in one of the next releases)
 
+**v0.2.0**
+
+  * Added joker functionality
+  * Fixed some bugs related to stream ID comparison
+  * Still needs to be tested in one of the next streams, expect some bugs
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
   * <s>Viewers can send a command to the chat once day / stream and after X ongoing "check ins" with this command they will be rewarded the VIP status (manually)</s>
-  * Maybe there could be something like joker: Let's say a user has 2 joker which will be used when he doesn't check in within the next stream in a row. After the joker count hits 0 he loses his collected streak.
+  * <s>Maybe there could be something like joker: Let's say a user has 2 joker which will be used when he doesn't check in within the next stream in a row. After the joker count hits 0 he loses his collected streak.</s>
   * <s>Prevent command from being called when the stream isn't live (can't get stream object stuff)</s>
   * Replace "in a row" with dynamic response (only if it's more then 1 checkIn in a row)
   * Viewers can list all current VIPs via command and the current max number of VIPs for the channel (this is limited by twitch in different stages, see: https://help.twitch.tv/s/article/Managing-Roles-for-your-Channel#faq) 
