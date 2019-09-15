@@ -232,7 +232,7 @@ def UpdateDataFile(username):
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the beerdata.json file 
     os.remove(vipdataFilepath)
     with open(vipdataFilepath, 'w') as f:
-        json.dump(data, f, indent=4)s
+        json.dump(data, f, indent=4)
 
     return
 
