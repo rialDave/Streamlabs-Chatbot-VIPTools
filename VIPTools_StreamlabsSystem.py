@@ -50,6 +50,7 @@ AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 JSONVariablesCheckInsInARow = "check_ins_in_a_row"
 JSONVariablesLastCheckIn = "last_check_in"
 JSONVariablesLastCheckInStreamId = "last_check_in_streamid"
+JSONVariablesRemainingJoker = "remaining_joker"
 
 # Configuration of twitch api urls
 ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId)
@@ -78,8 +79,7 @@ def Init():
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
     
-    Log(GetLastStreamId())
-    Log(GetCurrentStreamId())
+    Log("initialized")
 
     return
 
@@ -124,24 +124,12 @@ def Parse(parseString, command, data):
     Log('in parse')
 
     if (command == CommandVIPCheckIn):
-        if (True == IsNewUser(data.User)):
-            parseString = "Congratulations for you first check in, " + data.User + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! Current streak: " + GetStreak(data.User)
-            UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
-            return parseString
-
-        if (True == IsNewStream(data.User)):
-            parseString = data.User + ' just checked in for this stream! Current streak: ' + GetStreak(data.User)
-            UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
-
-        else:
-            UpdateDataFile(data.User) # Todo: split this up into two different functions, depending on following if
-            parseString = data.User + ' already checked in for this stream. Come join again the next time! Current streak: ' + GetStreak(data.User)
-
+        UpdateDataFile(data.User)
 
     if (command == CommandListVips):
         Log('in parse for CommandListVips')
 
-    # after every necessary variable was processed: return the whole parseString
+    # after every necessary variable was processed: return the whole parseString, if it wasn't already
     return parseString
 
 #---------------------------
@@ -192,6 +180,7 @@ def GetCurrentStreamId():
 
 #---------------------------
 #   UpdateDataFile: Function for modfiying the file which contains the data, see data/vipdata.json
+#   returns the parseString for parse(Function)
 #---------------------------
 def UpdateDataFile(username):
     currentday = GetCurrentDayFormattedDate()
@@ -206,31 +195,49 @@ def UpdateDataFile(username):
             data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
             data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
             data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+            data[str(username.lower())][JSONVariablesRemainingJoker] = 2
+
+            # directly return it, because "isnewstream" would be technically true as well but not correct in this case
+            return "Congratulations for you first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! " + GetStats(username)
 
         # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
         else:
             # new stream since last checkIn?
             if (True == IsNewStream(username)):
-                data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
-                data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
-                data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                
+                # ongoing check in (no missed stream)?
+                if (True == IsLastCheckinLastStream(username)):
+                    data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
+                    data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+                    data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
 
-            # same day since last check in? -> do nothing, should send a info message in the future
-            #else:
-                # tbd
+                    return username + ' just checked in for this stream! ' + GetStats(username)
+                else:
+                    # joker available?
+                    if (GetJoker(username) > 0):
+                        data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
+                        data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+                        data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                        data[str(username.lower())][JSONVariablesRemainingJoker] -= 1
+
+                        return username + ' already checked in for this stream. Come join again the next time! ' + GetStats(username)
+                    else:
+                        data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
+                        data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+                        data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                        data[str(username.lower())][JSONVariablesRemainingJoker] = 2
+
+                        return "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! " + GetStats(username)
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the beerdata.json file 
     os.remove(vipdataFilepath)
     with open(vipdataFilepath, 'w') as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4)s
 
     return
 
 #---------------------------
 #   returns bool if it is a new stream or not
-#   
-#   todo: would be better to check if it's a new stream, instead of a new day (maybe we can save the stream-id or sth in the dataFile instead of the date)
-#   atm it would be possible to just gather check ins whenever you call it in a stream (doesn't need to be in a row of streams)
 #---------------------------
 def IsNewStream(username):
     newStream = False
@@ -243,6 +250,24 @@ def IsNewStream(username):
         currentStreamId = GetCurrentStreamId()
 
         if (currentStreamId != lastCheckInStreamId):
+            return True
+
+    return newStream
+
+#---------------------------
+#   returns bool if the last checkin was in the last stream
+#---------------------------
+def IsLastCheckinLastStream(username):
+    newStream = False
+
+    # this loads the data of file vipdata.json into variable "data"
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        lastCheckInStreamId = data[str(username.lower())][JSONVariablesLastCheckInStreamId]
+        lastStreamId = GetLastStreamId()
+
+        if (lastStreamId == lastCheckInStreamId):
             return True
 
     return newStream
@@ -268,6 +293,21 @@ def GetStreak(username):
             streak = str(data[str(username.lower())][JSONVariablesCheckInsInARow]) + "/30"
 
     return streak
+
+#---------------------------
+#   returns the remaining joker int
+#---------------------------
+def GetJoker(username):
+
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        if str(username.lower()) not in data:
+            joker = 2
+        else:
+            joker = str(data[str(username.lower())][JSONVariablesRemainingJoker])
+
+    return joker
 
 #---------------------------
 #   returns the response from api request
@@ -316,3 +356,9 @@ def IsNewUser(username):
             return True
         else:
             return False
+
+#---------------------------
+# GetStats
+#---------------------------
+def GetStats(username):
+    return 'Current streak: ' + GetStreak(username) + ' | Remaining joker: ' + GetJoker(username)
