@@ -43,6 +43,10 @@ Changelog
   * Fixed some bugs related to stream ID comparison
   * Still needs to be tested in one of the next streams, expect some bugs
 
+**v0.2.1**
+
+  * Fixes some bugs again, stream comparison and updating data file should be working fine now (but still needs to be tested a lot more #expectmorebugs)
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
