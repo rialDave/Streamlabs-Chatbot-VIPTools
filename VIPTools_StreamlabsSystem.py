@@ -29,7 +29,7 @@ ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
-Version = "0.2.0"
+Version = "0.2.1"
 
 #---------------------------
 #   Global Variables
@@ -53,7 +53,7 @@ JSONVariablesLastCheckInStreamId = "last_check_in_streamid"
 JSONVariablesRemainingJoker = "remaining_joker"
 
 # Configuration of twitch api urls
-ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=1&client_id=" + AppClientId)
+ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=2&client_id=" + AppClientId)
 ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
@@ -124,7 +124,10 @@ def Parse(parseString, command, data):
     Log('in parse')
 
     if (command == CommandVIPCheckIn):
-        UpdateDataFile(data.User)
+        parseString = UpdateDataFile(data.User)
+
+        if ("error" != parseString):
+            parseString = parseString + GetStats(data.User)
 
     if (command == CommandListVips):
         Log('in parse for CommandListVips')
@@ -162,7 +165,7 @@ def Log(message):
 #---------------------------
 def GetLastStreamId():
     lastVideosObjectStorage = GetTwitchApiResponse(ApiUrlLastStream)
-    lastVideoObject = GetFirstVideoOfVideoObjectStorage(lastVideosObjectStorage)
+    lastVideoObject = GetVideoOfVideoObjectStorageByListId(lastVideosObjectStorage, 1)
     lastStreamId = lastVideoObject.get("broadcast_id")
 
     return lastStreamId
@@ -184,6 +187,7 @@ def GetCurrentStreamId():
 #---------------------------
 def UpdateDataFile(username):
     currentday = GetCurrentDayFormattedDate()
+    response = "error"
 
     # this loads the data of file vipdata.json into variable "data"
     with open(vipdataFilepath, 'r') as f:
@@ -198,7 +202,7 @@ def UpdateDataFile(username):
             data[str(username.lower())][JSONVariablesRemainingJoker] = 2
 
             # directly return it, because "isnewstream" would be technically true as well but not correct in this case
-            return "Congratulations for you first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! " + GetStats(username)
+            response = "Congratulations for you first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! "
 
         # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
         else:
@@ -211,7 +215,7 @@ def UpdateDataFile(username):
                     data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
                     data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
 
-                    return username + ' just checked in for this stream! ' + GetStats(username)
+                    response = username + ' just checked in for this stream! '
                 else:
                     # joker available?
                     if (GetJoker(username) > 0):
@@ -220,21 +224,23 @@ def UpdateDataFile(username):
                         data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
                         data[str(username.lower())][JSONVariablesRemainingJoker] -= 1
 
-                        return username + ' already checked in for this stream. Come join again the next time! ' + GetStats(username)
+                        response = username + ' just checked in for this stream, but needed to use a joker! '
                     else:
                         data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
                         data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
                         data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
                         data[str(username.lower())][JSONVariablesRemainingJoker] = 2
 
-                        return "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! " + GetStats(username)
+                        response = "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! "
+            else:
+                response = username + ' already checked in for this stream. Come join again the next time! '
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the beerdata.json file 
     os.remove(vipdataFilepath)
     with open(vipdataFilepath, 'w') as f:
-        json.dump(data, f, indent=4)s
+        json.dump(data, f, indent=4)
 
-    return
+    return response
 
 #---------------------------
 #   returns bool if it is a new stream or not
@@ -326,14 +332,14 @@ def LogAllVariablesOfVideoObject(videoObject):
     return
 
 #---------------------------
-#   GetFirstVideoOfVideoObjectStorage
+#   GetVideoOfVideoObjectStorageByListId
 #---------------------------
-def GetFirstVideoOfVideoObjectStorage(videoObjectStorage):
+def GetVideoOfVideoObjectStorageByListId(videoObjectStorage, listId):
     parsedLastVideo = json.loads(videoObjectStorage)
     dataResponse = parsedLastVideo["response"] # str
     parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
     videosList = parsedDataResponse.get("videos") # list
-    return videosList[0] # dict
+    return videosList[listId] # dict
 
 #---------------------------
 #   GetStreamObjectByObjectStorage
@@ -361,4 +367,4 @@ def IsNewUser(username):
 # GetStats
 #---------------------------
 def GetStats(username):
-    return 'Current streak: ' + GetStreak(username) + ' | Remaining joker: ' + GetJoker(username)
+    return 'Current streak: ' + str(GetStreak(username)) + ' | Remaining joker: ' + str(GetJoker(username))
