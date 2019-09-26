@@ -64,6 +64,8 @@ CommandListVips = "!listvips"
 ResponseListVips = "The current VIPs of " + VariableChannelName + " are: " + VariableVipList
 CommandVIPCheckIn = "!vipcheckin"
 ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + VariableCheckInCountReadable + " time in a row! Status: " + VariableCheckInCount + "/" + VariableNeededCheckins
+CommandResetAfterReconnect = "!resetcheckins" # todo: set permissions for this to mod-only
+ResponseResetAfterReconnect = "Okay, I've reset the checkins from last stream to the current stream."
 
 # Configuration of keys in json file
 # tbd
@@ -128,6 +130,13 @@ def Parse(parseString, command, data):
 
         if ("error" != parseString):
             parseString = parseString + GetStats(data.User)
+
+    if (command == CommandResetAfterReconnect):
+        Log('in parse for resetAfterReconnect')
+        if (True == Parent.HasPermission(data.User, "Moderator", "")):
+            parseString = FixDatafileAfterReconnect()
+        else:
+            parseString = "Permission denied: You have to be a Moderator to use this command!"
 
     if (command == CommandListVips):
         Log('in parse for CommandListVips')
@@ -368,3 +377,17 @@ def IsNewUser(username):
 #---------------------------
 def GetStats(username):
     return 'Current streak: ' + str(GetStreak(username)) + ' | Remaining joker: ' + str(GetJoker(username))
+
+#---------------------------
+# FixDatafileAfterReconnect
+#---------------------------
+def FixDatafileAfterReconnect():
+    # this loads the data of file vipdata.json into variable "data"
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f) # dict
+
+        for user in data:
+            if (IsLastCheckinLastStream((user.lower()) == True):
+                user[JSONVariablesLastCheckInStreamId] = GetCurrentStreamId();
+
+    return "Okay, I've reset the checkins from last stream to the current stream."
