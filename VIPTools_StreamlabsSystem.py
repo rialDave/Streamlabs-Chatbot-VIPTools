@@ -29,7 +29,7 @@ ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
-Version = "0.3.0"
+Version = "0.3.0-dev"
 
 #---------------------------
 #   Global Variables
@@ -294,9 +294,6 @@ def IsLastCheckinLastStream(username):
         lastCheckInStreamId = data[str(username.lower())][JSONVariablesLastCheckInStreamId]
         lastStreamId = GetLastStreamId()
 
-        Log(lastCheckInStreamId)
-        Log(GetLastStreamId())
-
         if (lastStreamId == lastCheckInStreamId):
             return True
 
@@ -402,9 +399,7 @@ def FixDatafileAfterReconnect():
         data = json.load(f) # dict
 
         for user in data:
-            Log(user)
             if (IsLastCheckinLastStream(user.lower()) == True):
-                Log(user.lower())
                 user[JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
 
     return "Okay, I've reset the checkins from last stream to the current stream."
