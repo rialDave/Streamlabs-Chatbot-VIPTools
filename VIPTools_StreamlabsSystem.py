@@ -67,6 +67,9 @@ ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + Va
 CommandResetAfterReconnect = "!resetcheckins" # todo: set permissions for this to mod-only
 ResponseResetAfterReconnect = "Okay, I've reset the checkins from last stream to the current stream."
 
+ResponsePermissionDeniedMod = "Permission denied: You have to be a Moderator to use this command!"
+ResponseOnlyWhenLive = "ERROR: This command is only available, when the stream is live. Sorry!"
+
 # Configuration of keys in json file
 # tbd
 
@@ -90,16 +93,29 @@ def Init():
 #---------------------------
 def Execute(data):
 
+    currentStreamObjectStorage = GetTwitchApiResponse(ApiUrlCurrentStream)
+    currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
+
     # call parse function if any of our defined commands is called
     if (data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn):
-        currentStreamObjectStorage = GetTwitchApiResponse(ApiUrlCurrentStream)
-        currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
         if (currentStreamObject == None):
-            Parent.SendStreamMessage("ERROR: This command is only available, when the stream is live. Sorry!")
+            Parent.SendStreamMessage(ResponseOnlyWhenLive)
             return
 
         ParsedResponse = Parse(ResponseVIPCheckIn, CommandVIPCheckIn, data) # Parse response
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
+
+    if (data.IsChatMessage() and data.GetParam(0).lower() == CommandResetAfterReconnect):
+        if (currentStreamObject == None):
+            Parent.SendStreamMessage(ResponseOnlyWhenLive)
+            return
+        else:
+            if (True == Parent.HasPermission(data.User, "Moderator", "")):
+                ParsedResponse = Parse(ResponseResetAfterReconnect, CommandResetAfterReconnect, data) # Parse response
+                Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
+            else:
+                Parent.SendStreamMessage(ResponsePermissionDeniedMod)
+                return
 
     if (data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips):
         ParsedResponse = Parse(ResponseListVips, CommandListVips, data) # Parse response
@@ -132,11 +148,7 @@ def Parse(parseString, command, data):
             parseString = parseString + GetStats(data.User)
 
     if (command == CommandResetAfterReconnect):
-        Log('in parse for resetAfterReconnect')
-        if (True == Parent.HasPermission(data.User, "Moderator", "")):
-            parseString = FixDatafileAfterReconnect()
-        else:
-            parseString = "Permission denied: You have to be a Moderator to use this command!"
+        parseString = FixDatafileAfterReconnect()
 
     if (command == CommandListVips):
         Log('in parse for CommandListVips')
@@ -211,7 +223,7 @@ def UpdateDataFile(username):
             data[str(username.lower())][JSONVariablesRemainingJoker] = 2
 
             # directly return it, because "isnewstream" would be technically true as well but not correct in this case
-            response = "Congratulations for your first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! "
+            response = "Congratulations for your first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! Hint: type '/vips' to list all current VIPs of this channel."
 
         # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
         else:
@@ -281,6 +293,9 @@ def IsLastCheckinLastStream(username):
 
         lastCheckInStreamId = data[str(username.lower())][JSONVariablesLastCheckInStreamId]
         lastStreamId = GetLastStreamId()
+
+        Log(lastCheckInStreamId)
+        Log(GetLastStreamId())
 
         if (lastStreamId == lastCheckInStreamId):
             return True
@@ -387,7 +402,9 @@ def FixDatafileAfterReconnect():
         data = json.load(f) # dict
 
         for user in data:
-            if (IsLastCheckinLastStream((user.lower()) == True):
-                user[JSONVariablesLastCheckInStreamId] = GetCurrentStreamId();
+            Log(user)
+            if (IsLastCheckinLastStream(user.lower()) == True):
+                Log(user.lower())
+                user[JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
 
     return "Okay, I've reset the checkins from last stream to the current stream."
