@@ -328,7 +328,7 @@ def GetJoker(username):
         if str(username.lower()) not in data:
             joker = 2
         else:
-            joker = str(data[str(username.lower())][JSONVariablesRemainingJoker])
+            joker = int(data[str(username.lower())][JSONVariablesRemainingJoker])
 
     return joker
 
