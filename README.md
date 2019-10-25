@@ -51,6 +51,10 @@ Changelog
 
   * Adds new Feature: "!resetcheckins" command for mods, to reset all checkins from the last stream to the current stream id (useful if you had a stream reconnect for example)
 
+**v0.3.0**
+
+  * Adds new Feature: VIPStatusHandler. This one always adds your current VIP Status to the response message
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>

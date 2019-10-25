@@ -29,7 +29,7 @@ ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
-Version = "0.3.0"
+Version = "0.4.0"
 
 #---------------------------
 #   Global Variables
@@ -38,19 +38,23 @@ vipdataFile = os.path.join('data', 'vipdata.json')
 vipdataFilepath = os.path.join(os.path.dirname(__file__), vipdataFile)
 
 VariableChannelName = "$channelName"
-VariableVipList = "$vips"
 VariableUser = "$user"
 VariableCheckInCount = "$checkInCount"
 VariableCheckInCountReadable = "$checkInCountReadable"
 VariableNeededCheckins = "$neededCheckIns"
 ChannelId = "159000697"
 AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
+VIPStatusLocalization = {
+    0: "No VIP",
+    1: "VIP - but you can go on collecting check ins, if you want. Thank you for always being here! <3"
+}
 
 # Configuration of keys in json file
 JSONVariablesCheckInsInARow = "check_ins_in_a_row"
 JSONVariablesLastCheckIn = "last_check_in"
 JSONVariablesLastCheckInStreamId = "last_check_in_streamid"
 JSONVariablesRemainingJoker = "remaining_joker"
+JSONVariablesVIPStatus = "vipstatus"
 
 # Configuration of twitch api urls
 ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=2&client_id=" + AppClientId)
@@ -60,8 +64,6 @@ ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + 
 #   Settings
 #---------------------------
 
-CommandListVips = "!listvips"
-ResponseListVips = "The current VIPs of " + VariableChannelName + " are: " + VariableVipList
 CommandVIPCheckIn = "!vipcheckin"
 ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + VariableCheckInCountReadable + " time in a row! Status: " + VariableCheckInCount + "/" + VariableNeededCheckins
 CommandResetAfterReconnect = "!resetcheckins" # todo: set permissions for this to mod-only
@@ -116,11 +118,6 @@ def Execute(data):
             else:
                 Parent.SendStreamMessage(ResponsePermissionDeniedMod)
                 return
-
-    if (data.IsChatMessage() and data.GetParam(0).lower() == CommandListVips):
-        ParsedResponse = Parse(ResponseListVips, CommandListVips, data) # Parse response
-        Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
-
     return
 
 #---------------------------
@@ -149,9 +146,6 @@ def Parse(parseString, command, data):
 
     if (command == CommandResetAfterReconnect):
         parseString = FixDatafileAfterReconnect()
-
-    if (command == CommandListVips):
-        Log('in parse for CommandListVips')
 
     # after every necessary variable was processed: return the whole parseString, if it wasn't already
     return parseString
@@ -214,7 +208,7 @@ def UpdateDataFile(username):
     with open(vipdataFilepath, 'r') as f:
         data = json.load(f)
 
-        # check if the given username exists in data. -> user doesnt exist yet, create array of the user data, which will be stored in vipdata.json
+        # check if the given username exists in data. -> user doesnt exist yet, create array of the user data with current default values, which will be stored in vipdata.json
         if (True == IsNewUser(username)):
             data[str(username.lower())] = {}
             data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
@@ -223,45 +217,62 @@ def UpdateDataFile(username):
             data[str(username.lower())][JSONVariablesRemainingJoker] = 2
 
             # directly return it, because "isnewstream" would be technically true as well but not correct in this case
-            response = "Congratulations for your first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! Hint: type '/vips' to list all current VIPs of this channel."
+            response = "Congratulations for your first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! Hint: type '/vips' to list all current VIPs of this channel. "
 
         # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
         else:
-            # new stream since last checkIn?
-            if (True == IsNewStream(username)):
-                
-                # ongoing check in (no missed stream)?
-                if (True == IsLastCheckinLastStream(username)):
-                    data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
-                    data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
-                    data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+            if (data[str(username.lower())][JSONVariablesCheckInsInARow]):
 
-                    response = username + ' just checked in for this stream! '
-                else:
-                    # joker available?
-                    if (GetJoker(username) > 0):
+                # new stream since last checkIn?
+                if (True == IsNewStream(username)):
+                    
+                    # ongoing check in (no missed stream)?
+                    if (True == IsLastCheckinLastStream(username)):
                         data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
                         data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
                         data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
-                        data[str(username.lower())][JSONVariablesRemainingJoker] -= 1
 
-                        response = username + ' just checked in for this stream, but needed to use a joker! '
+                        response = username + ' just checked in for this stream! '
                     else:
-                        data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
-                        data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
-                        data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
-                        data[str(username.lower())][JSONVariablesRemainingJoker] = 2
+                        # joker available?
+                        if (GetJoker(username) > 0):
+                            data[str(username.lower())][JSONVariablesCheckInsInARow] += 1
+                            data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+                            data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                            data[str(username.lower())][JSONVariablesRemainingJoker] -= 1
 
-                        response = "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! "
+                            response = username + ' just checked in for this stream, but needed to use a joker! '
+                        else:
+                            data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
+                            data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+                            data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                            data[str(username.lower())][JSONVariablesRemainingJoker] = 2
+
+                            response = "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! "
+                else:
+                    response = username + ' already checked in for this stream. Come join again the next time! '
+
+    # VIP Status Handler
+    if (IsVip(username) == 0):
+        if (JSONVariablesVIPStatus in data[str(username.lower())]):
+            if (data[str(username.lower())][JSONVariablesCheckInsInARow] == 30):
+                data[str(username.lower())][JSONVariablesVIPStatus] = 1
+                response = "WHOOP! You've just made it and got 30 VIP check ins in a row. Get in contact with Dave and collect your VIP badge - congrats!"
+
             else:
-                response = username + ' already checked in for this stream. Come join again the next time! '
+                if (data[str(username.lower())][JSONVariablesVIPStatus] != 1 and data[str(username.lower())][JSONVariablesCheckInsInARow] >= 30):
+                    data[str(username.lower())][JSONVariablesVIPStatus] = 1
+                else:
+                    data[str(username.lower())][JSONVariablesVIPStatus] = 0
+        else:
+            data[str(username.lower())][JSONVariablesVIPStatus] = 0
 
-    # after everything was modified and updated, we need to write the stuff from our "data" variable to the beerdata.json file 
+    # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file 
     os.remove(vipdataFilepath)
     with open(vipdataFilepath, 'w') as f:
         json.dump(data, f, indent=4)
 
-    return response
+    return response + " | VIP-Status: " + VIPStatusLocalization[IsVip(username)]
 
 #---------------------------
 #   returns bool if it is a new stream or not
@@ -293,9 +304,6 @@ def IsLastCheckinLastStream(username):
 
         lastCheckInStreamId = data[str(username.lower())][JSONVariablesLastCheckInStreamId]
         lastStreamId = GetLastStreamId()
-
-        Log(lastCheckInStreamId)
-        Log(GetLastStreamId())
 
         if (lastStreamId == lastCheckInStreamId):
             return True
@@ -335,7 +343,7 @@ def GetJoker(username):
         if str(username.lower()) not in data:
             joker = 2
         else:
-            joker = str(data[str(username.lower())][JSONVariablesRemainingJoker])
+            joker = int(data[str(username.lower())][JSONVariablesRemainingJoker])
 
     return joker
 
@@ -391,7 +399,7 @@ def IsNewUser(username):
 # GetStats
 #---------------------------
 def GetStats(username):
-    return 'Current streak: ' + str(GetStreak(username)) + ' | Remaining joker: ' + str(GetJoker(username))
+    return ' | Current streak: ' + str(GetStreak(username)) + ' | Remaining joker: ' + str(GetJoker(username))
 
 #---------------------------
 # FixDatafileAfterReconnect
@@ -402,9 +410,27 @@ def FixDatafileAfterReconnect():
         data = json.load(f) # dict
 
         for user in data:
-            Log(user)
             if (IsLastCheckinLastStream(user.lower()) == True):
-                Log(user.lower())
-                user[JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                data[user][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+
+    # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
+    os.remove(vipdataFilepath)
+    with open(vipdataFilepath, 'w') as f:
+        json.dump(data, f, indent=4)
 
     return "Okay, I've reset the checkins from last stream to the current stream."
+
+#---------------------------
+# IsVip
+#
+# Returns 0 or 1 if a given user is a VIP or not
+#---------------------------
+def IsVip(username):
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f) # dict
+
+        if (JSONVariablesVIPStatus in data[str(username.lower())]):
+            if (data[str(username.lower())] == 1):
+                return 1
+
+    return 0
