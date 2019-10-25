@@ -142,7 +142,7 @@ def Parse(parseString, command, data):
         parseString = UpdateDataFile(data.User)
 
         if ("error" != parseString):
-            parseString = parseString + GetStats(data.User) + VipStatusHandler(data.User)
+            parseString = parseString + GetStats(data.User)
 
     if (command == CommandResetAfterReconnect):
         parseString = FixDatafileAfterReconnect()
@@ -252,12 +252,27 @@ def UpdateDataFile(username):
                 else:
                     response = username + ' already checked in for this stream. Come join again the next time! '
 
+    # VIP Status Handler
+    if (IsVip(username) == 0):
+        if (JSONVariablesVIPStatus in data[str(username.lower())]):
+            if (data[str(username.lower())][JSONVariablesCheckInsInARow] == 30):
+                data[str(username.lower())][JSONVariablesVIPStatus] = 1
+                response = "WHOOP! You've just made it and got 30 VIP check ins in a row. Get in contact with Dave and collect your VIP badge - congrats!"
+
+            else:
+                if (data[str(username.lower())][JSONVariablesVIPStatus] != 1 and data[str(username.lower())][JSONVariablesCheckInsInARow] >= 30):
+                    data[str(username.lower())][JSONVariablesVIPStatus] = 1
+                else:
+                    data[str(username.lower())][JSONVariablesVIPStatus] = 0
+        else:
+            data[str(username.lower())][JSONVariablesVIPStatus] = 0
+
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file 
     os.remove(vipdataFilepath)
     with open(vipdataFilepath, 'w') as f:
         json.dump(data, f, indent=4)
 
-    return response
+    return response + " | VIP-Status: " + VIPStatusLocalization[IsVip(username)]
 
 #---------------------------
 #   returns bool if it is a new stream or not
@@ -384,7 +399,7 @@ def IsNewUser(username):
 # GetStats
 #---------------------------
 def GetStats(username):
-    return 'Current streak: ' + str(GetStreak(username)) + ' | Remaining joker: ' + str(GetJoker(username))
+    return ' | Current streak: ' + str(GetStreak(username)) + ' | Remaining joker: ' + str(GetJoker(username))
 
 #---------------------------
 # FixDatafileAfterReconnect
@@ -406,30 +421,6 @@ def FixDatafileAfterReconnect():
     return "Okay, I've reset the checkins from last stream to the current stream."
 
 #---------------------------
-# VipStatusHandler
-#
-# This function handles the vip status and provides additional information in a string response
-#---------------------------
-def VipStatusHandler(username):
-    if (IsVip(username) == 0):
-        with open(vipdataFilepath, 'r') as f:
-            data = json.load(f) # dict
-
-            if (JSONVariablesVIPStatus in data[str(username.lower())]):
-                if (data[str(username.lower())][JSONVariablesCheckInsInARow] == 30):
-                    SetVipStatus(username, 1)
-                    return "WHOOP! You've just made it and got 30 VIP check ins in a row. Get in contact with Dave and collect your VIP badge - congrats!"
-
-                if (data[str(username.lower())][JSONVariablesCheckInsInARow] >= 30):
-                    SetVipStatus(username, 1)
-                else:
-                    SetVipStatus(username, 0)
-            else:
-                SetVipStatus(username, 0)
-
-    return " | VIP-Status: " + VIPStatusLocalization[IsVip(username)]
-
-#---------------------------
 # IsVip
 #
 # Returns 0 or 1 if a given user is a VIP or not
@@ -443,22 +434,3 @@ def IsVip(username):
                 return 1
 
     return 0
-
-#---------------------------
-# SetVipStatus
-#
-# Sets the given status for given username
-#---------------------------
-def SetVipStatus(username, status):
-    # this loads the data of file vipdata.json into variable "data"
-    with open(vipdataFilepath, 'r') as f:
-        data = json.load(f)
-
-        data[str(username.lower())][JSONVariablesVIPStatus] = int(status)
-
-    # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file   
-    os.remove(vipdataFilepath)
-    with open(vipdataFilepath, 'w') as f:
-        json.dump(data, f, indent=4)
-
-    return True
