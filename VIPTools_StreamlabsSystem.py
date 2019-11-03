@@ -29,7 +29,7 @@ ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
-Version = "0.4.0"
+Version = "0.4.1"
 
 #---------------------------
 #   Global Variables
@@ -428,6 +428,9 @@ def FixDatafileAfterReconnect():
 def IsVip(username):
     with open(vipdataFilepath, 'r') as f:
         data = json.load(f) # dict
+
+        if str(username.lower()) not in data:
+            return 0
 
         if (JSONVariablesVIPStatus in data[str(username.lower())]):
             if (data[str(username.lower())] == 1):
