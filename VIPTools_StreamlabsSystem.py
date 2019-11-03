@@ -429,6 +429,9 @@ def IsVip(username):
     with open(vipdataFilepath, 'r') as f:
         data = json.load(f) # dict
 
+        if str(username.lower()) not in data:
+            return 0
+
         if (JSONVariablesVIPStatus in data[str(username.lower())]):
             if (data[str(username.lower())] == 1):
                 return 1
