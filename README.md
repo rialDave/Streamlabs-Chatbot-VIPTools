@@ -51,9 +51,13 @@ Changelog
 
   * Adds new Feature: "!resetcheckins" command for mods, to reset all checkins from the last stream to the current stream id (useful if you had a stream reconnect for example)
 
-**v0.3.0**
+**v0.4.0**
 
   * Adds new Feature: VIPStatusHandler. This one always adds your current VIP Status to the response message
+
+**v0.4.1**
+
+  * Fixes a bug with the new VIPStatusHandler feature, which prevented new users to be added to the data file
 
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
@@ -61,9 +65,11 @@ Changelog
   * <s>Viewers can send a command to the chat once day / stream and after X ongoing "check ins" with this command they will be rewarded the VIP status (manually)</s>
   * <s>Maybe there could be something like joker: Let's say a user has 2 joker which will be used when he doesn't check in within the next stream in a row. After the joker count hits 0 he loses his collected streak.</s>
   * <s>Prevent command from being called when the stream isn't live (can't get stream object stuff)</s>
-  * Viewers can list all current VIPs via command and the current max number of VIPs for the channel (this is limited by twitch in different stages, see: https://help.twitch.tv/s/article/Managing-Roles-for-your-Channel#faq) 
+  * <s>Viewers can list all current VIPs via command and the current max number of VIPs for the channel</s> (this is limited by twitch in different stages, see: https://help.twitch.tv/s/article/Managing-Roles-for-your-Channel#faq) Official Twitch function: "/vips"
+  * Feature: Top10VipCheckins or something similar
   * Replace "in a row" with dynamic response (only if it's more then 1 checkIn in a row)
   * Extend documentation in readme file
-  * If a viewer reaches the necessary goal it will 1. set to "active vip status" in the data file of the script and 2. automatically set to VIP for the channel (only the streamer account can do this, so the script needs to send a command as streamer in the chat. Needs to be researched if this is possible)
+  * <s>If a viewer reaches the necessary goal it will set to "active vip status" in the data file of the script</s>
+  * Automatically set as VIP for the channel when goal reached (only the streamer account can do this, so the script needs to send a command as streamer in the chat. Needs to be researched if this is possible)
   * Automatic backup of data files located under "data"
   * Integrate codacy code checking and badge
