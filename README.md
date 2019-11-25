@@ -59,6 +59,10 @@ Changelog
 
   * Fixes a bug with the new VIPStatusHandler feature, which prevented new users to be added to the data file
 
+**v0.4.2**
+
+  * Fixes a bug that the tool didn't check if the channels last video is a stream video or highlight (users lost jokers even if they checked in at the last stream, when a highlight as created in the meantime)
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
