@@ -29,7 +29,7 @@ ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
-Version = "0.4.1"
+Version = "0.4.2"
 
 #---------------------------
 #   Global Variables
@@ -48,6 +48,7 @@ VIPStatusLocalization = {
     0: "No VIP",
     1: "VIP - but you can go on collecting check ins, if you want. Thank you for always being here! <3"
 }
+ApiVideoLimit = "10"
 
 # Configuration of keys in json file
 JSONVariablesCheckInsInARow = "check_ins_in_a_row"
@@ -57,7 +58,7 @@ JSONVariablesRemainingJoker = "remaining_joker"
 JSONVariablesVIPStatus = "vipstatus"
 
 # Configuration of twitch api urls
-ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=2&client_id=" + AppClientId)
+ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=" + ApiVideoLimit + "&client_id=" + AppClientId)
 ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
@@ -181,6 +182,7 @@ def Log(message):
 def GetLastStreamId():
     lastVideosObjectStorage = GetTwitchApiResponse(ApiUrlLastStream)
     lastVideoObject = GetVideoOfVideoObjectStorageByListId(lastVideosObjectStorage, 1)
+    Log(lastVideoObject.get("broadcast_id"))
     lastStreamId = lastVideoObject.get("broadcast_id")
 
     return lastStreamId
@@ -367,10 +369,21 @@ def LogAllVariablesOfVideoObject(videoObject):
 #   GetVideoOfVideoObjectStorageByListId
 #---------------------------
 def GetVideoOfVideoObjectStorageByListId(videoObjectStorage, listId):
+    listId = int(listId) # let's be safe here
+
     parsedLastVideo = json.loads(videoObjectStorage)
     dataResponse = parsedLastVideo["response"] # str
     parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
     videosList = parsedDataResponse.get("videos") # list
+
+    while (int(videosList[listId].get("broadcast_id")) == 1 or videosList[listId].get("status") == "recording"):
+        
+        if (listId >= int(ApiVideoLimit)):
+            Log("Failed to find valid stream object in list of defined last videos of channel")
+            break
+
+        listId += 1
+
     return videosList[listId] # dict
 
 #---------------------------
