@@ -62,6 +62,10 @@ Changelog
 **v0.4.2**
 
   * Fixes a bug that the tool didn't check if the channels last video is a stream video or highlight (users lost jokers even if they checked in at the last stream, when a highlight as created in the meantime)
+  
+**v0.4.3**
+
+  * Fixes a bug where the VIP status wasn't correctly handled, when a user reaches VIP or is VIP already
 
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
