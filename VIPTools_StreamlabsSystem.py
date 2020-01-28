@@ -100,6 +100,7 @@ def Execute(data):
     currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
 
     # call parse function if any of our defined commands is called
+    # vipcheckin command called
     if (data.IsChatMessage() and data.GetParam(0).lower() == CommandVIPCheckIn):
         if (currentStreamObject == None):
             Parent.SendStreamMessage(ResponseOnlyWhenLive)
@@ -108,6 +109,7 @@ def Execute(data):
         ParsedResponse = Parse(ResponseVIPCheckIn, CommandVIPCheckIn, data) # Parse response
         Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
 
+    # reset after reconnect command called
     if (data.IsChatMessage() and data.GetParam(0).lower() == CommandResetAfterReconnect):
         if (currentStreamObject == None):
             Parent.SendStreamMessage(ResponseOnlyWhenLive)
@@ -274,7 +276,7 @@ def UpdateDataFile(username):
     with open(vipdataFilepath, 'w') as f:
         json.dump(data, f, indent=4)
 
-    return response + " | VIP-Status: " + VIPStatusLocalization[IsVip(username)]
+    return response + " | VIP-Status: " + VIPStatusLocalization[int(IsVip(username))]
 
 #---------------------------
 #   returns bool if it is a new stream or not
@@ -446,7 +448,7 @@ def IsVip(username):
             return 0
 
         if (JSONVariablesVIPStatus in data[str(username.lower())]):
-            if (data[str(username.lower())] == 1):
+            if (data[str(username.lower())][JSONVariablesVIPStatus] == 1):
                 return 1
 
     return 0
