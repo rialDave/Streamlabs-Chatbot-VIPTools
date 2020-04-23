@@ -62,13 +62,15 @@ ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/
 ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
-#   Settings
+#   Settings (caution: some of the response texts are overwritten later)
 #---------------------------
 
 CommandVIPCheckIn = "!vipcheckin"
 ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + VariableCheckInCountReadable + " time in a row! Status: " + VariableCheckInCount + "/" + VariableNeededCheckins
 CommandResetAfterReconnect = "!resetcheckins" # todo: set permissions for this to mod-only
 ResponseResetAfterReconnect = "Okay, I've reset the checkins from last stream to the current stream."
+CommandResetCheckIns = "!resetvipcheckins"
+ResponseResetCheckIns = "Okay! Your check ins have been reset and you automatically checked in for this stream. Just send " + CommandVIPCheckIn + " again, the next time you're here again."
 
 ResponsePermissionDeniedMod = "Permission denied: You have to be a Moderator to use this command!"
 ResponseOnlyWhenLive = "ERROR: This command is only available, when the stream is live. Sorry!"
@@ -121,6 +123,16 @@ def Execute(data):
             else:
                 Parent.SendStreamMessage(ResponsePermissionDeniedMod)
                 return
+
+    # reset checkIns command called
+    if (data.IsChatMessage() and data.GetParam(0).lower() == CommandResetCheckIns):
+        if (currentStreamObject == None):
+            Parent.SendStreamMessage(ResponseOnlyWhenLive)
+            return
+
+        if (1 == ResetCheckinsForUser(data.User)):
+            Parent.SendStreamMessage(ResponseResetCheckIns) # Send your message to chat
+
     return
 
 #---------------------------
@@ -452,3 +464,27 @@ def IsVip(username):
                 return 1
 
     return 0
+
+#---------------------------
+# ResetCheckinsForUser (but not the vip status)
+#
+# Returns 1 if the function was successful or not
+#---------------------------
+def ResetCheckinsForUser(username):
+    # this loads the data of file vipdata.json into variable "data"
+    with open(vipdataFilepath, 'r') as f:
+        data = json.load(f) # dict
+
+        currentday = GetCurrentDayFormattedDate()
+
+        data[str(username.lower())][JSONVariablesCheckInsInARow] = 1
+        data[str(username.lower())][JSONVariablesLastCheckIn] = currentday
+        data[str(username.lower())][JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+        data[str(username.lower())][JSONVariablesRemainingJoker] = 2
+
+    # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
+    os.remove(vipdataFilepath)
+    with open(vipdataFilepath, 'w') as f:
+        json.dump(data, f, indent=4)
+
+    return 1
