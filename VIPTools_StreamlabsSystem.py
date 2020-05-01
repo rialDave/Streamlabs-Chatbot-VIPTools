@@ -13,8 +13,6 @@ from pprint import pprint
 from datetime import datetime
 
 import clr
-#   Import your Settings class
-from Settings_Module import MySettings
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib")) #point at lib folder for classes / references
 
