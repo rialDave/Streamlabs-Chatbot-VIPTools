@@ -62,7 +62,7 @@ ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/
 ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
-#   Settings (caution: some of the response texts are overwritten later)
+#   Settings (caution: some of the response texts are overwritten later / not refactored yet)
 #---------------------------
 
 CommandVIPCheckIn = "!vipcheckin"
@@ -89,7 +89,7 @@ def Init():
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
     
-    Log("initialized")
+    Log("Script successfully initialized")
 
     return
 
@@ -151,8 +151,6 @@ def Tick():
 # ORIGINAL DEF: def Parse(parseString, userid, username, targetid, targetname, message):
 #---------------------------
 def Parse(parseString, command, data):
-    Log('in parse')
-
     if (command == CommandVIPCheckIn):
         parseString = UpdateDataFile(data.User)
 
@@ -175,6 +173,7 @@ def ReloadSettings(jsonData):
 #   [Optional] Unload (Called when a user reloads their scripts or closes the bot / cleanup stuff)
 #---------------------------
 def Unload():
+    Log("Script unloaded")
     return
 
 #---------------------------
