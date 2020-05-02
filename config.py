@@ -13,7 +13,7 @@ ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality"
 Creator = "rialDave"
-Version = "0.5.0"
+Version = "0.5.0-dev"
 
 #---------------------------
 #   Global Variables
