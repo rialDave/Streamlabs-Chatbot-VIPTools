@@ -1,21 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import json
 #---------------------------
 #   Import Libraries
 #---------------------------
 import os
 import sys
+import json
 import time
 from pprint import pprint
-
-from datetime import datetime
-
 from shutil import copyfile
 
 import clr
-
 clr.AddReference("IronPython.SQLite.dll")
 clr.AddReference("IronPython.Modules.dll")
 
@@ -26,6 +22,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib")) # point at lib f
 from definitions import ROOT_DIR
 import config
 import fsLib
+import miscLib
+import twitchLib
 
 
 #---------------------------
@@ -63,8 +61,8 @@ def Init():
 #   [Required] Execute Data / Process messages
 #---------------------------
 def Execute(data):
-    currentStreamObjectStorage = GetTwitchApiResponse(config.ApiUrlCurrentStream)
-    currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
+    currentStreamObjectStorage = twitchLib.GetTwitchApiResponse(config.ApiUrlCurrentStream, Parent)
+    currentStreamObject = twitchLib.GetStreamObjectByObjectStorage(currentStreamObjectStorage)
 
     # call parse function if any of our defined commands is called
     # vipcheckin command called
@@ -154,39 +152,18 @@ def ScriptToggled(state):
 
 #---------------------------
 #   Log helper (For logging into Script Logs of the Chatbot)
+#   Note that you need to pass the "Parent" object and use the normal "Parent.Log" function if you want to log something inside of a module
 #---------------------------
 def Log(message):
     Parent.Log(ScriptName, str(message))
     return
 
 #---------------------------
-#   Gets stream id of last stream for channel
-#---------------------------
-def GetLastStreamId():
-    lastVideosObjectStorage = GetTwitchApiResponse(config.ApiUrlLastStream)
-    lastVideoObject = GetVideoOfVideoObjectStorageByListId(lastVideosObjectStorage, 1)
-    Log(lastVideoObject.get("broadcast_id"))
-    lastStreamId = lastVideoObject.get("broadcast_id")
-
-    return lastStreamId
-
-#---------------------------
-#   Gets stream id of current stream for channel
-#---------------------------
-def GetCurrentStreamId():
-    
-    currentStreamObjectStorage = GetTwitchApiResponse(config.ApiUrlCurrentStream)
-    currentStreamObject = GetStreamObjectByObjectStorage(currentStreamObjectStorage)
-    currentStreamId = currentStreamObject.get("_id")
-
-    return currentStreamId
-
-#---------------------------
 #   UpdateDataFile: Function for modfiying the file which contains the data, see data/vipdata.json
 #   returns the parseString for parse(Function)
 #---------------------------
 def UpdateDataFile(username):
-    currentday = GetCurrentDayFormattedDate()
+    currentday = miscLib.GetCurrentDayFormattedDate()
     response = "error"
 
     # this loads the data of file vipdata.json into variable "data"
@@ -198,7 +175,7 @@ def UpdateDataFile(username):
             data[str(username.lower())] = {}
             data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
             data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
 
             # directly return it, because "isnewstream" would be technically true as well but not correct in this case
@@ -215,7 +192,7 @@ def UpdateDataFile(username):
                     if (True == IsLastCheckinLastStream(username)):
                         data[str(username.lower())][config.JSONVariablesCheckInsInARow] += 1
                         data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-                        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
 
                         response = username + ' just checked in for this stream! '
                     else:
@@ -223,14 +200,14 @@ def UpdateDataFile(username):
                         if (GetJoker(username) > 0):
                             data[str(username.lower())][config.JSONVariablesCheckInsInARow] += 1
                             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
                             data[str(username.lower())][config.JSONVariablesRemainingJoker] -= 1
 
                             response = username + ' just checked in for this stream, but needed to use a joker! '
                         else:
                             data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
                             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
                             data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
 
                             response = "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! "
@@ -270,7 +247,7 @@ def IsNewStream(username):
         data = json.load(f)
 
         lastCheckInStreamId = data[str(username.lower())][config.JSONVariablesLastCheckInStreamId]
-        currentStreamId = GetCurrentStreamId()
+        currentStreamId = twitchLib.GetCurrentStreamId(Parent)
 
         if (currentStreamId != lastCheckInStreamId):
             return True
@@ -288,19 +265,12 @@ def IsLastCheckinLastStream(username):
         data = json.load(f)
 
         lastCheckInStreamId = data[str(username.lower())][config.JSONVariablesLastCheckInStreamId]
-        lastStreamId = GetLastStreamId()
+        lastStreamId = twitchLib.GetLastStreamId(Parent)
 
         if (lastStreamId == lastCheckInStreamId):
             return True
 
     return newStream
-
-#---------------------------
-#   returns the formatted date of current day 
-#---------------------------
-def GetCurrentDayFormattedDate():
-    currenttimestamp = int(time.time())
-    return datetime.fromtimestamp(currenttimestamp).strftime('%Y-%m-%d')
 
 #---------------------------
 #   returns the string formatted streak (still hardcoded)
@@ -332,51 +302,7 @@ def GetJoker(username):
 
     return joker
 
-#---------------------------
-#   returns the response from api request
-#---------------------------
-def GetTwitchApiResponse(url):
-    headers = {'Accept': 'application/vnd.twitchtv.v5+json'}
-    return Parent.GetRequest(url, headers)
 
-#---------------------------
-#   helper class to log all variables of last stream object (debugging)
-#---------------------------
-def LogAllVariablesOfVideoObject(videoObject):
-    for attributes in videoObject:
-        Log(attributes)
-
-    return
-
-#---------------------------
-#   GetVideoOfVideoObjectStorageByListId
-#---------------------------
-def GetVideoOfVideoObjectStorageByListId(videoObjectStorage, listId):
-    listId = int(listId) # let's be safe here
-
-    parsedLastVideo = json.loads(videoObjectStorage)
-    dataResponse = parsedLastVideo["response"] # str
-    parsedDataResponse = json.loads(dataResponse) # dict, contents: _total, videos
-    videosList = parsedDataResponse.get("videos") # list
-
-    while (int(videosList[listId].get("broadcast_id")) == 1 or videosList[listId].get("status") == "recording"):
-        
-        if (listId >= int(config.ApiVideoLimit)):
-            Log("Failed to find valid stream object in list of defined last videos of channel")
-            break
-
-        listId += 1
-
-    return videosList[listId] # dict
-
-#---------------------------
-#   GetStreamObjectByObjectStorage
-#---------------------------
-def GetStreamObjectByObjectStorage(streamObjectStorage):
-    parsedStreamObjectStorage = json.loads(streamObjectStorage)
-    dataResponse = parsedStreamObjectStorage["response"] # str
-    parsedDataResponse = json.loads(dataResponse) # dict
-    return parsedDataResponse.get("stream")
 
 #---------------------------
 #   IsNewUser
@@ -407,7 +333,7 @@ def FixDatafileAfterReconnect():
 
         for user in data:
             if (IsLastCheckinLastStream(user.lower()) == True):
-                data[user][config.JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+                data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
     os.remove(config.VipdataFilepath)
@@ -419,7 +345,7 @@ def FixDatafileAfterReconnect():
 #---------------------------
 # IsVip
 #
-# Returns 0 or 1 if a given user is a VIP or not
+# Returns 0 or 1 if a given user is a VIP or not (in our datafile)
 #---------------------------
 def IsVip(username):
     with open(config.VipdataFilepath, 'r') as f:
@@ -444,11 +370,11 @@ def ResetCheckinsForUser(username):
     with open(config.VipdataFilepath, 'r') as f:
         data = json.load(f) # dict
 
-        currentday = GetCurrentDayFormattedDate()
+        currentday = miscLib.GetCurrentDayFormattedDate()
 
         data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
         data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = GetCurrentStreamId()
+        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
         data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
@@ -464,6 +390,6 @@ def ResetCheckinsForUser(username):
 # Backups the data file in the "archive" folder with current date and timestamp for ease of use
 #---------------------------
 def BackupDataFile():
-    dstFilename = "vipdata_bak-" + str(GetCurrentDayFormattedDate()) + "_" + str(int(time.time())) + ".json"
-    dstFilepath = fsLib.GetFilepathInFolder("data/archive", dstFilename)
+    dstFilename = config.VipdataBackupFilePrefix + str(miscLib.GetCurrentDayFormattedDate()) + "_" + str(int(time.time())) + ".json"
+    dstFilepath = fsLib.GetFilepathInFolder(config.VipdataBackupPath, dstFilename)
     copyfile(config.VipdataFilepath, dstFilepath)

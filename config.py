@@ -20,6 +20,8 @@ Version = "0.4.3-dev"
 #   Some stuff from here should be moved to a GUI settings file later
 #---------------------------
 VipdataFilepath = fsLib.GetFilepathInFolder("data", "vipdata.json")
+VipdataBackupFilePrefix = "vipdata_bak-"
+VipdataBackupPath = "data/archive"
 
 VariableChannelName = "$channelName"
 VariableUser = "$user"
@@ -46,7 +48,7 @@ ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/
 ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
-#   Settings (caution: some of the response texts are overwritten later / not refactored yet)
+#   Command settings and responses (caution: some of the response texts are overwritten later / not refactored yet)
 #---------------------------
 
 CommandVIPCheckIn = "!vipcheckin"
@@ -58,6 +60,3 @@ ResponseResetCheckIns = "Okay! Your check ins have been reset and you automatica
 
 ResponsePermissionDeniedMod = "Permission denied: You have to be a Moderator to use this command!"
 ResponseOnlyWhenLive = "ERROR: This command is only available, when the stream is live. Sorry!"
-
-# Configuration of keys in json file
-# tbd
