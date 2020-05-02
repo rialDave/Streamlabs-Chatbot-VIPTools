@@ -12,6 +12,8 @@ from pprint import pprint
 
 from datetime import datetime
 
+from shutil import copyfile
+
 import clr
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "lib")) #point at lib folder for classes / references
@@ -83,6 +85,9 @@ def Init():
 
     #   Checks if vipdataFile exists, if it doesnt: creates it
     if os.path.isfile(vipdataFilepath) == 0:
+        # TODO: generate data and archive directory
+
+        # generate empty data file and save it
         data = {}
         with open(vipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
@@ -172,6 +177,7 @@ def ReloadSettings(jsonData):
 #---------------------------
 def Unload():
     Log("Script unloaded")
+    BackupDataFile()
     return
 
 #---------------------------
@@ -485,3 +491,23 @@ def ResetCheckinsForUser(username):
         json.dump(data, f, indent=4)
 
     return 1
+
+#---------------------------
+# GetRelativeFilepathInFolder
+#
+# Returns the relative (os) path for given folderpath (str) and filename (str)
+#---------------------------
+def GetRelativeFilepathInFolder(folderpath, filename):
+    file = os.path.join(folderpath, filename)
+    return os.path.join(os.path.dirname(__file__), file)
+
+#---------------------------
+# BackupDataFile
+#
+# Backups the data file in the "archive" folder with current date and timestamp for ease of use
+#---------------------------
+def BackupDataFile():
+    srcFilepath = vipdataFilepath
+    dstFilename = "vipdata_bak-" + str(GetCurrentDayFormattedDate()) + "_" + str(int(time.time())) + ".json"
+    dstFilepath = GetRelativeFilepathInFolder("data/archive", dstFilename)
+    copyfile(vipdataFilepath, dstFilepath)
