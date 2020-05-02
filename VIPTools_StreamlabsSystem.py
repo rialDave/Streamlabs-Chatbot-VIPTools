@@ -21,7 +21,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib")) # point at lib f
 
 from definitions import ROOT_DIR
 import config
-import fsLib
 import miscLib
 import twitchLib
 
@@ -44,10 +43,12 @@ Version = config.Version
 #   [Required] Initialize Data (Only called on load of script)
 #---------------------------
 def Init():
-    #   Checks if vipdataFile exists, if it doesnt: creates it
-    if os.path.isfile(config.VipdataFilepath) == 0:
-        # TODO: generate data and archive directory
+    # generate data and archive directory if they don't exist (uses VipdataBackupPath because it includes the data path)
+    if (False == os.path.isdir(config.VipdataBackupPath)):
+        os.makedirs(config.VipdataBackupPath)
 
+    # Creates an empty data file if it doesn't exist
+    if (False == os.path.isfile(config.VipdataFilepath)):
         # generate empty data file and save it
         data = {}
         with open(config.VipdataFilepath, 'w') as f:
@@ -390,6 +391,13 @@ def ResetCheckinsForUser(username):
 # Backups the data file in the "archive" folder with current date and timestamp for ease of use
 #---------------------------
 def BackupDataFile():
-    dstFilename = config.VipdataBackupFilePrefix + str(miscLib.GetCurrentDayFormattedDate()) + "_" + str(int(time.time())) + ".json"
-    dstFilepath = fsLib.GetFilepathInFolder(config.VipdataBackupPath, dstFilename)
-    copyfile(config.VipdataFilepath, dstFilepath)
+    if (True == os.path.isfile(config.VipdataFilepath)):
+
+        if (False == os.path.isdir(config.VipdataBackupPath)):
+            os.makedirs(config.VipdataBackupPath)
+
+        dstFilename = config.VipdataBackupFilePrefix + str(miscLib.GetCurrentDayFormattedDate()) + "_" + str(int(time.time())) + ".json"
+        dstFilepath = os.path.join(config.VipdataBackupPath, dstFilename)
+        copyfile(config.VipdataFilepath, dstFilepath)
+    
+    return

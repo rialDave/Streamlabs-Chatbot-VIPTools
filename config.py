@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import fsLib
+from definitions import ROOT_DIR
 
 #---------------------------
 #   [Required] Script Information
@@ -19,9 +19,12 @@ Version = "0.4.3-dev"
 #   Global Variables
 #   Some stuff from here should be moved to a GUI settings file later
 #---------------------------
-VipdataFilepath = fsLib.GetFilepathInFolder("data", "vipdata.json")
+VipdataFolder = "data"
+VipdataFilename = "vipdata.json"
+VipdataFilepath = os.path.join(ROOT_DIR, VipdataFolder, VipdataFilename)
+VipdataBackupFolder = "archive" # inside data path
 VipdataBackupFilePrefix = "vipdata_bak-"
-VipdataBackupPath = "data/archive"
+VipdataBackupPath = os.path.join(ROOT_DIR, VipdataFolder, VipdataBackupFolder)
 
 VariableChannelName = "$channelName"
 VariableUser = "$user"

@@ -13,12 +13,8 @@ Services\Scripts\
 ```
 
 2. Create a new Folder called _"VIPTools"_
-3. Drop all of the stuff from this Repository in there
-4. Create a new folder called "data" inside of it
-5. Create a new folder "archive" inside the "data" folder
-6. Load the scripts in SL Chatbot and you're good to go!
-
-(Steps 4 and 5 will hopefully be automated soon)
+3. Drop/clone all of the stuff from this Repository in there
+4. Load the scripts in SL Chatbot and you're good to go!
 
 If you're having trouble with loading scripts in the SL Chatbot, see: https://www.youtube.com/watch?v=l3FBpY-0880
 
