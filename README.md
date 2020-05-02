@@ -67,6 +67,14 @@ Changelog
 
   * Fixes a bug where the VIP status wasn't correctly handled, when a user reaches VIP or is VIP already
 
+**v0.5.0**
+
+  * Added new feature: automatic backups in archive folder on every unload of the script
+  * Added new feature: automatic creation of data and archive folder on startup
+  * Fixed a bug with !resetcheckins mod-command, that didn't handle checkins in the second last stream (the last "real" stream)
+  * Renamed "!resetcheckins" mod-command to "!rcar" (for "reset checkins after reconnect" :P)
+  * Some additional refactoring tasks and code quality improvements (like splitting up in some first modules)
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
@@ -74,11 +82,12 @@ Changelog
   * <s>Maybe there could be something like joker: Let's say a user has 2 joker which will be used when he doesn't check in within the next stream in a row. After the joker count hits 0 he loses his collected streak.</s>
   * <s>Prevent command from being called when the stream isn't live (can't get stream object stuff)</s>
   * <s>Viewers can list all current VIPs via command and the current max number of VIPs for the channel</s> (this is limited by twitch in different stages, see: https://help.twitch.tv/s/article/Managing-Roles-for-your-Channel#faq) Official Twitch function: "/vips"
-  * Reconnect-Improvement: Overhaul of the "resetcheckins"-command for streamers: Two commands: Everyone who already checked in in the last stream, will just be set to the current stream id and date. Everyone who didn't yet checkin, but did in the second last stream, will be set to the last stream id and date (could be a stable v1.0.0 after that).
-  * Automatically backup data files in archive folder with timestamp when stream starts (on script load)
+  * <s>If a viewer reaches the necessary goal it will set to "active vip status" in the data file of the script</s>
+  * <s>Reconnect-Improvement: Overhaul of the "resetcheckins"-command for streamers: Two commands: Everyone who already checked in in the last stream, will just be set to the current stream id and date. Everyone who didn't yet checkin, but did in the second last stream, will be set to the last stream id and date (could be a stable v1.0.0 after that).</s>
+  * <s>Automatically backup data files in archive folder with timestamp when stream starts (on script load)</s>
   * Feature: Top10VipCheckins or something similar
   * Replace "in a row" with dynamic response (only if it's more then 1 checkIn in a row)
+  * Clean up config file / make adjustable in chatbot settings
   * Extend documentation in readme file
-  * <s>If a viewer reaches the necessary goal it will set to "active vip status" in the data file of the script</s>
   * Automatically set as VIP for the channel when goal reached (only the streamer account can do this, so the script needs to send a command as streamer in the chat. Needs to be researched if this is possible via Twitch API)
   * Integrate codacy code checking and badge
