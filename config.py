@@ -47,7 +47,9 @@ JSONVariablesRemainingJoker = "remaining_joker"
 JSONVariablesVIPStatus = "vipstatus"
 
 # Configuration of twitch api urls
+# Example cURL: curl -X GET -H 'Accept: application/vnd.twitchtv.v5+json' -v -i 'https://api.twitch.tv/kraken/channels/159000697/videos?limit=10&client_id=znnnk0lduw7lsppls5v8kpo9zvfcvd'
 ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=" + ApiVideoLimit + "&client_id=" + AppClientId)
+# Example cURL: curl -X GET -H 'Accept: application/vnd.twitchtv.v5+json' -v -i 'https://api.twitch.tv/kraken/streams/159000697?client_id=znnnk0lduw7lsppls5v8kpo9zvfcvd'
 ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
 
 #---------------------------
@@ -56,7 +58,7 @@ ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + 
 
 CommandVIPCheckIn = "!vipcheckin"
 ResponseVIPCheckIn = "Great! " + VariableUser + " just checked in for the " + VariableCheckInCountReadable + " time in a row! Status: " + VariableCheckInCount + "/" + VariableNeededCheckins
-CommandResetAfterReconnect = "!resetcheckins" # todo: set permissions for this to mod-only
+CommandResetAfterReconnect = "!rcar"
 ResponseResetAfterReconnect = "Okay, I've reset the checkins from last stream to the current stream."
 CommandResetCheckIns = "!resetvipcheckins"
 ResponseResetCheckIns = "Okay! Your check ins have been reset and you automatically checked in for this stream. Just send " + CommandVIPCheckIn + " again, the next time you're here again."

@@ -28,12 +28,12 @@ def LogAllVariablesOfVideoObject(videoObject, Parent):
     return
 
 #---------------------------
-#   Gets stream id of last stream for channel
+#   Gets stream id of given stream by list id (offset to the current stream)
 #---------------------------
-def GetLastStreamId(Parent):
+def GetAttributeByVideoListId(attribute, listId, Parent):
     lastVideosObjectStorage = GetTwitchApiResponse(config.ApiUrlLastStream, Parent)
-    lastVideoObject = GetVideoOfVideoObjectStorageByListId(lastVideosObjectStorage, 1, Parent)
-    lastStreamId = lastVideoObject.get("broadcast_id")
+    lastVideoObject = GetVideoOfVideoObjectStorageByListId(lastVideosObjectStorage, listId, Parent)
+    lastStreamId = lastVideoObject.get(str(attribute))
 
     return lastStreamId
 
@@ -50,6 +50,7 @@ def GetCurrentStreamId(Parent):
 
 #---------------------------
 #   GetVideoOfVideoObjectStorageByListId
+#   hint: listId 0 = current stream
 #---------------------------
 def GetVideoOfVideoObjectStorageByListId(videoObjectStorage, listId, Parent):
     listId = int(listId) # let's be safe here

@@ -115,12 +115,14 @@ def Tick():
 # ORIGINAL DEF: def Parse(parseString, userid, username, targetid, targetname, message):
 #---------------------------
 def Parse(parseString, command, data):
+    # if vipcheckin command is called
     if (command == config.CommandVIPCheckIn):
         parseString = UpdateDataFile(data.User)
 
         if ("error" != parseString):
             parseString = parseString + GetStats(data.User)
 
+    # if CommandResetAfterReconnect is called
     if (command == config.CommandResetAfterReconnect):
         parseString = FixDatafileAfterReconnect()
 
@@ -190,7 +192,7 @@ def UpdateDataFile(username):
                 if (True == IsNewStream(username)):
                     
                     # ongoing check in (no missed stream)?
-                    if (True == IsLastCheckinLastStream(username)):
+                    if (True == EqualsLastCheckinGivenStreamByListId(username, 1)):
                         data[str(username.lower())][config.JSONVariablesCheckInsInARow] += 1
                         data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
                         data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
@@ -256,22 +258,20 @@ def IsNewStream(username):
     return newStream
 
 #---------------------------
-#   returns bool if the last checkin was in the last stream
+#   returns bool if the last checkin was in the same stream as given by listid (offset of saved streams)
 #---------------------------
-def IsLastCheckinLastStream(username):
-    newStream = False
-
+def EqualsLastCheckinGivenStreamByListId(username, listId):
     # this loads the data of file vipdata.json into variable "data"
     with open(config.VipdataFilepath, 'r') as f:
         data = json.load(f)
 
         lastCheckInStreamId = data[str(username.lower())][config.JSONVariablesLastCheckInStreamId]
-        lastStreamId = twitchLib.GetLastStreamId(Parent)
+        secondLastStreamId = twitchLib.GetAttributeByVideoListId("broadcast_id", listId, Parent)
 
-        if (lastStreamId == lastCheckInStreamId):
+        if (secondLastStreamId == lastCheckInStreamId):
             return True
 
-    return newStream
+    return False
 
 #---------------------------
 #   returns the string formatted streak (still hardcoded)
@@ -333,8 +333,19 @@ def FixDatafileAfterReconnect():
         data = json.load(f) # dict
 
         for user in data:
-            if (IsLastCheckinLastStream(user.lower()) == True):
+            # if user already checked in before reconnection
+            if (EqualsLastCheckinGivenStreamByListId(user.lower(), 1) == True):
+                Log('This user checked in, in the last stream object and will be reset:')
+                Log(user)
                 data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+                data[user][config.JSONVariablesLastCheckIn] = miscLib.GetCurrentDayFormattedDate()
+            # if user didn't check in before reconnection, but checked in in the last real stream (second last stream)
+            if (EqualsLastCheckinGivenStreamByListId(user.lower(), 2) == True):
+                Log('This User checked in in the second last stream object and will be reset:')
+                Log(user)
+                data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetAttributeByVideoListId("broadcast_id", 1, Parent)
+                data[user][config.JSONVariablesLastCheckIn] = twitchLib.GetAttributeByVideoListId("recorded_at", 1, Parent)[0:10] # only use the first 10 digits, because working with RFC3339 in python is......
+                
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
     os.remove(config.VipdataFilepath)
@@ -371,10 +382,8 @@ def ResetCheckinsForUser(username):
     with open(config.VipdataFilepath, 'r') as f:
         data = json.load(f) # dict
 
-        currentday = miscLib.GetCurrentDayFormattedDate()
-
         data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
-        data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
+        data[str(username.lower())][config.JSONVariablesLastCheckIn] = miscLib.GetCurrentDayFormattedDate()
         data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
         data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
 
