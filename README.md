@@ -75,6 +75,10 @@ Changelog
   * Renamed "!resetcheckins" mod-command to "!rcar" (for "reset checkins after reconnect" :P)
   * Some additional refactoring tasks and code quality improvements (like splitting up in some first modules)
 
+**v0.6.0**
+
+  * Added new feature: Top10Vipcheckins command to view the current top checkins (maybe there will be another command to see the top 10 all-time check in streaks in the future, see below)
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
@@ -85,7 +89,8 @@ Changelog
   * <s>If a viewer reaches the necessary goal it will set to "active vip status" in the data file of the script</s>
   * <s>Reconnect-Improvement: Overhaul of the "resetcheckins"-command for streamers: Two commands: Everyone who already checked in in the last stream, will just be set to the current stream id and date. Everyone who didn't yet checkin, but did in the second last stream, will be set to the last stream id and date (could be a stable v1.0.0 after that).</s>
   * <s>Automatically backup data files in archive folder with timestamp when stream starts (on script load)</s>
-  * Feature: Top10VipCheckins or something similar
+  * <s>Feature: Top10VipCheckins or something similar</s>
+  * Feature: Log highest checkinstreak in vipdata file (with date of last checkin of that streak)
   * Replace "in a row" with dynamic response (only if it's more then 1 checkIn in a row)
   * Clean up config file / make adjustable in chatbot settings
   * Extend documentation in readme file
