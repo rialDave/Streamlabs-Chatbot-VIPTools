@@ -457,6 +457,7 @@ def GetTop10VipcheckinsWithData():
             top10VipcheckinsWithData += "#" + str(position) + " "
             top10VipcheckinsWithData += str(checkinUser)
             top10VipcheckinsWithData += " (" + str(data[checkinUser][config.JSONVariablesCheckInsInARow]) + ")"
+            top10VipcheckinsWithData += " [" + config.VIPStatusLocalizationSimple[int(IsVip(checkinUser))] + "]"
             
             # only display dash below last position
             if (position < 10):

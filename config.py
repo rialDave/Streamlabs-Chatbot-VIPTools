@@ -37,6 +37,10 @@ VIPStatusLocalization = {
     0: "No VIP",
     1: "VIP - but you can go on collecting check ins, if you want. Thank you for always being here! <3"
 }
+VIPStatusLocalizationSimple = {
+    0: "No VIP",
+    1: "VIP"
+}
 ApiVideoLimit = "10"
 
 # Configuration of keys in json file
