@@ -187,6 +187,8 @@ def UpdateDataFile(username):
             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
             data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
             data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
+            data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = 1
+            data[str(username.lower())][config.JSONVariablesHighestCheckInStreakDate] = currentday
 
             # directly return it, because "isnewstream" would be technically true as well but not correct in this case
             response = "Congratulations for your first check in, " + username + "! When you reach a streak of 30 check ins in a row, you'll have the chance to get the VIP badge (you have two jokers if you miss some streams). Good luck! Hint: type '/vips' to list all current VIPs of this channel. "
@@ -194,6 +196,11 @@ def UpdateDataFile(username):
         # if the user already exists, update the user with added checkIn count, but we need to check here if it's the first beer today or not to set the right values 
         else:
             if (data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
+
+                # for existing users: check and set highest streak to current streak
+                if (data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
+                    data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = data[str(username.lower())][config.JSONVariablesCheckInsInARow]
+                    data[str(username.lower())][config.JSONVariablesHighestCheckInStreakDate] = data[str(username.lower())][config.JSONVariablesLastCheckIn]
 
                 # new stream since last checkIn?
                 if (True == IsNewStream(username)):
@@ -203,6 +210,10 @@ def UpdateDataFile(username):
                         data[str(username.lower())][config.JSONVariablesCheckInsInARow] += 1
                         data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
                         data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+                        # only count highest streak counter up if it's actually lower than the checkins
+                        if (data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
+                            data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = data[str(username.lower())][config.JSONVariablesCheckInsInARow]
+                            data[str(username.lower())][config.JSONVariablesHighestCheckInStreakDate] = data[str(username.lower())][config.JSONVariablesLastCheckIn]
 
                         response = username + ' just checked in for this stream! '
                     else:
@@ -212,6 +223,10 @@ def UpdateDataFile(username):
                             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
                             data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
                             data[str(username.lower())][config.JSONVariablesRemainingJoker] -= 1
+                            # only count highest streak counter up if it's actually lower than the checkins
+                            if (data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
+                                data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = data[str(username.lower())][config.JSONVariablesCheckInsInARow]
+                                data[str(username.lower())][config.JSONVariablesHighestCheckInStreakDate] = data[str(username.lower())][config.JSONVariablesLastCheckIn]
 
                             response = username + ' just checked in for this stream, but needed to use a joker! '
                         else:

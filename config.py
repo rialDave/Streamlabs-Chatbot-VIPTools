@@ -49,6 +49,8 @@ JSONVariablesLastCheckIn = "last_check_in"
 JSONVariablesLastCheckInStreamId = "last_check_in_streamid"
 JSONVariablesRemainingJoker = "remaining_joker"
 JSONVariablesVIPStatus = "vipstatus"
+JSONVariablesHighestCheckInStreak = "highest_check_in_streak"
+JSONVariablesHighestCheckInStreakDate = "highest_check_in_streak_date"
 
 # Configuration of twitch api urls
 # Example cURL: curl -X GET -H 'Accept: application/vnd.twitchtv.v5+json' -v -i 'https://api.twitch.tv/kraken/channels/159000697/videos?limit=10&client_id=znnnk0lduw7lsppls5v8kpo9zvfcvd'
