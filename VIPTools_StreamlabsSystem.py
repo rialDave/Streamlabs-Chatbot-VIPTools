@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import time
+import collections
 from pprint import pprint
 from shutil import copyfile
 
@@ -96,6 +97,12 @@ def Execute(data):
 
         if (1 == ResetCheckinsForUser(data.User)):
             Parent.SendStreamMessage(config.ResponseResetCheckIns) # Send your message to chat
+
+
+    # top10vipcheckins command called
+    if (data.IsChatMessage() and data.GetParam(0).lower() == config.CommandTop10Vipcheckins):
+        top10vipcheckinsMessage = GetTop10VipcheckinsWithData()
+        Parent.SendStreamMessage(str(top10vipcheckinsMessage)) # Send your message to chat
 
     return
 
@@ -410,3 +417,49 @@ def BackupDataFile():
         copyfile(config.VipdataFilepath, dstFilepath)
     
     return
+
+#---------------------------
+# GetTop10Vipcheckins
+#
+# Returns a list of all top 10 vipcheckin users sorted by checkins to be iterated
+#---------------------------
+def GetTop10Vipcheckins():
+    with open(config.VipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        # build sortableDict with user and checkin count like "user: checkins"
+        sortableCheckinsDict = {}
+        for user in data:
+            sortableCheckinsDict[user] = data[user][config.JSONVariablesCheckInsInARow]
+
+    # sort it by checkins and put it in a list of max 10 items
+    sortedCheckinsList = sorted(sortableCheckinsDict.items(), key=lambda x: x[1], reverse=True)
+    sortedCheckinsDict = collections.OrderedDict(sortedCheckinsList)
+    
+    # only the first 10 items
+    return sortedCheckinsDict.keys()[:10]
+
+#---------------------------
+# GetTop10VipcheckinsWithData
+#
+# Returns a complete string of all top 10 vipcheckin users sorted by checkins and with data (checkins)
+#---------------------------
+def GetTop10VipcheckinsWithData():
+    top10Vipcheckins = GetTop10Vipcheckins()
+    top10VipcheckinsWithData = config.ResponseTop10Vipcheckins
+
+    with open(config.VipdataFilepath, 'r') as f:
+        data = json.load(f)
+
+        position = 0
+        for checkinUser in top10Vipcheckins:
+            position += 1
+            top10VipcheckinsWithData += "#" + str(position) + " "
+            top10VipcheckinsWithData += str(checkinUser)
+            top10VipcheckinsWithData += " (" + str(data[checkinUser][config.JSONVariablesCheckInsInARow]) + ")"
+            
+            # only display dash below last position
+            if (position < 10):
+                 top10VipcheckinsWithData += " - "
+
+    return top10VipcheckinsWithData

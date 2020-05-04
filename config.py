@@ -11,9 +11,9 @@ from definitions import ROOT_DIR
 
 ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
-Description = "Adds new features for Twitchs VIP functionality"
+Description = "Adds new features for Twitchs VIP functionality (Users can check-in every time you stream)"
 Creator = "rialDave"
-Version = "0.5.0"
+Version = "0.6.0"
 
 #---------------------------
 #   Global Variables
@@ -62,6 +62,8 @@ CommandResetAfterReconnect = "!rcar"
 ResponseResetAfterReconnect = "Okay, I've reset the checkins from last stream to the current stream."
 CommandResetCheckIns = "!resetvipcheckins"
 ResponseResetCheckIns = "Okay! Your check ins have been reset and you automatically checked in for this stream. Just send " + CommandVIPCheckIn + " again, the next time you're here again."
+CommandTop10Vipcheckins = "!top10vipcheckins"
+ResponseTop10Vipcheckins = "Alright, here are the top 10 craziest VIPCheckin dudes (THANKS <3): "
 
 ResponsePermissionDeniedMod = "Permission denied: You have to be a Moderator to use this command!"
 ResponseOnlyWhenLive = "ERROR: This command is only available, when the stream is live. Sorry!"
