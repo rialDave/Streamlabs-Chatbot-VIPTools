@@ -11,9 +11,9 @@ from definitions import ROOT_DIR
 
 ScriptName = "VIPTools"
 Website = "https://twitch.tv/rialDave/"
-Description = "Adds new features for Twitchs VIP functionality"
+Description = "Adds new features for Twitchs VIP functionality (Users can check-in every time you stream)"
 Creator = "rialDave"
-Version = "0.5.0-dev"
+Version = "0.6.0"
 
 #---------------------------
 #   Global Variables
