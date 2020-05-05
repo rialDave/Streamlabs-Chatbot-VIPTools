@@ -84,6 +84,7 @@ def Execute(data):
         else:
             if (True == Parent.HasPermission(data.User, "Moderator", "")):
                 ParsedResponse = Parse(config.ResponseResetAfterReconnect, config.CommandResetAfterReconnect, data) # Parse response
+                Parent.SendStreamMessage("Now resetting the checkins from last stream due to a reconnect, please wait..")
                 Parent.SendStreamMessage(ParsedResponse) # Send your message to chat
             else:
                 Parent.SendStreamMessage(config.ResponsePermissionDeniedMod)
@@ -198,7 +199,7 @@ def UpdateDataFile(username):
             if (data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
 
                 # for existing users: check and set highest streak to current streak
-                if (data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
+                if (config.JSONVariablesHighestCheckInStreak not in data[str(username.lower())] or data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
                     data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = data[str(username.lower())][config.JSONVariablesCheckInsInARow]
                     data[str(username.lower())][config.JSONVariablesHighestCheckInStreakDate] = data[str(username.lower())][config.JSONVariablesLastCheckIn]
 
