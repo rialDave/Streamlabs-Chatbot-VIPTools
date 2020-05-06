@@ -99,11 +99,21 @@ def Execute(data):
         if (1 == ResetCheckinsForUser(data.User)):
             Parent.SendStreamMessage(config.ResponseResetCheckIns) # Send your message to chat
 
-
     # top10vipcheckins command called
     if (data.IsChatMessage() and data.GetParam(0).lower() == config.CommandTop10Vipcheckins):
-        top10vipcheckinsMessage = GetTop10VipcheckinsWithData()
+        top10vipcheckinsMessage = GetTop10VipcheckinsWithData(False)
+        Parent.SendStreamMessage(str(config.ResponseTop10Vipcheckins)) # Send your message to chat
         Parent.SendStreamMessage(str(top10vipcheckinsMessage)) # Send your message to chat
+
+    # top10vipcheckinsalltime command called
+    if (data.IsChatMessage() and data.GetParam(0).lower() == config.CommandTop10VipcheckinsAlltime):
+        # make sure every user has a highest checkin streak and highest checkin streak date value (for older vipdata files)
+        if (True == CheckAndFixAlltimeCheckins()):
+            top10vipcheckinsAlltimeMessage = GetTop10VipcheckinsWithData(True)
+            Parent.SendStreamMessage(str(config.ResponseTop10VipcheckinsAlltime)) # Send your message to chat
+            Parent.SendStreamMessage(str(top10vipcheckinsAlltimeMessage)) # Send your message to chat
+        else:
+            Parent.SendStreamMessage("Error: Something went wrong when trying to fix the alltime checkins")
 
     return
 
@@ -438,15 +448,20 @@ def BackupDataFile():
 # GetTop10Vipcheckins
 #
 # Returns a list of all top 10 vipcheckin users sorted by checkins to be iterated
+# Param: "alltime = TRUE" returns the alltime top10vipcheckins (highest streak ever)
 #---------------------------
-def GetTop10Vipcheckins():
+def GetTop10Vipcheckins(alltime):
     with open(config.VipdataFilepath, 'r') as f:
         data = json.load(f)
 
         # build sortableDict with user and checkin count like "user: checkins"
         sortableCheckinsDict = {}
         for user in data:
-            sortableCheckinsDict[user] = data[user][config.JSONVariablesCheckInsInARow]
+            # different list if alltime = True
+            if (True == alltime):
+                sortableCheckinsDict[user] = data[user][config.JSONVariablesHighestCheckInStreak]
+            else:
+                sortableCheckinsDict[user] = data[user][config.JSONVariablesCheckInsInARow]
 
     # sort it by checkins and put it in a list of max 10 items
     sortedCheckinsList = sorted(sortableCheckinsDict.items(), key=lambda x: x[1], reverse=True)
@@ -459,11 +474,14 @@ def GetTop10Vipcheckins():
 # GetTop10VipcheckinsWithData
 #
 # Returns a complete string of all top 10 vipcheckin users sorted by checkins and with data (checkins)
+# Param: bool "alltime = TRUE" returns the alltime top10vipcheckins (highest streak ever)
 #---------------------------
-def GetTop10VipcheckinsWithData():
-    top10Vipcheckins = GetTop10Vipcheckins()
-    top10VipcheckinsWithData = config.ResponseTop10Vipcheckins
+def GetTop10VipcheckinsWithData(alltime):
+    top10Vipcheckins = GetTop10Vipcheckins(alltime)
 
+    top10VipcheckinsWithData = ""
+
+    # get data for response
     with open(config.VipdataFilepath, 'r') as f:
         data = json.load(f)
 
@@ -472,7 +490,14 @@ def GetTop10VipcheckinsWithData():
             position += 1
             top10VipcheckinsWithData += "#" + str(position) + " "
             top10VipcheckinsWithData += str(checkinUser)
-            top10VipcheckinsWithData += " (" + str(data[checkinUser][config.JSONVariablesCheckInsInARow]) + ")"
+            top10VipcheckinsWithData += " ("
+            # different output, when alltime = True
+            if (True == alltime):
+                top10VipcheckinsWithData += str(data[checkinUser][config.JSONVariablesHighestCheckInStreak]) + " at " + str(data[checkinUser][config.JSONVariablesHighestCheckInStreakDate])
+            else:
+                top10VipcheckinsWithData += str(data[checkinUser][config.JSONVariablesCheckInsInARow])
+
+            top10VipcheckinsWithData += ")"
             top10VipcheckinsWithData += " [" + config.VIPStatusLocalizationSimple[int(IsVip(checkinUser))] + "]"
             
             # only display dash below last position
@@ -480,3 +505,33 @@ def GetTop10VipcheckinsWithData():
                  top10VipcheckinsWithData += " - "
 
     return top10VipcheckinsWithData
+
+#---------------------------
+# CheckAndFixAlltimeCheckins
+#
+# Checks if there is a user left without alltime checkins (highest checkin streak) set and fixes it.
+# Returns true, if successfull
+#---------------------------
+def CheckAndFixAlltimeCheckins():
+    returnStatus = False
+
+    # this loads the data of file vipdata.json into variable "data"
+    with open(config.VipdataFilepath, 'r') as f:
+        data = json.load(f) # dict
+
+        for user in data:
+            # if user doesn't have a HighestCheckInStreak set yet
+            if (config.JSONVariablesHighestCheckInStreak not in data[str(user.lower())]):
+                Log('Automatically set highestCheckInStreak for user:')
+                Log(user)
+                data[str(user.lower())][config.JSONVariablesHighestCheckInStreak] = data[str(user.lower())][config.JSONVariablesCheckInsInARow]
+                data[str(user.lower())][config.JSONVariablesHighestCheckInStreakDate] = data[str(user.lower())][config.JSONVariablesLastCheckIn]
+            
+        returnStatus = True
+
+    # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
+    os.remove(config.VipdataFilepath)
+    with open(config.VipdataFilepath, 'w') as f:
+        json.dump(data, f, indent=4)
+
+    return returnStatus

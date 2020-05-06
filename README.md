@@ -1,7 +1,7 @@
 Streamlabs-Chatbot-VIPTools
 =============================
 
-A Python Script for Streamlabs Chatbot with some additional features for the (new) Twitch "VIP" role.
+A Python Script for Streamlabs Chatbot with some additional features for the (new) Twitch "VIP" role (Users can check-in every time you stream to earn the badge).
 
 How to install 
 ----------------------------------
