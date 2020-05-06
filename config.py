@@ -13,7 +13,7 @@ ScriptName = "♦ VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality (Users can check-in every time you stream to earn the badge)"
 Creator = "rialDave"
-Version = "0.6.0-dev"
+Version = "0.7.0"
 
 #---------------------------
 #   Global Variables
