@@ -9,11 +9,11 @@ from definitions import ROOT_DIR
 #   TODO: Some stuff from here should be moved to a GUI settings file later
 #---------------------------
 
-ScriptName = "VIPTools"
+ScriptName = "♦ VIPTools"
 Website = "https://twitch.tv/rialDave/"
-Description = "Adds new features for Twitchs VIP functionality (Users can check-in every time you stream)"
+Description = "Adds new features for Twitchs VIP functionality (Users can check-in every time you stream to earn the badge)"
 Creator = "rialDave"
-Version = "0.6.0"
+Version = "0.7.0"
 
 #---------------------------
 #   Global Variables
@@ -37,6 +37,10 @@ VIPStatusLocalization = {
     0: "No VIP",
     1: "VIP - but you can go on collecting check ins, if you want. Thank you for always being here! <3"
 }
+VIPStatusLocalizationSimple = {
+    0: "No VIP",
+    1: "VIP"
+}
 ApiVideoLimit = "10"
 
 # Configuration of keys in json file
@@ -45,6 +49,8 @@ JSONVariablesLastCheckIn = "last_check_in"
 JSONVariablesLastCheckInStreamId = "last_check_in_streamid"
 JSONVariablesRemainingJoker = "remaining_joker"
 JSONVariablesVIPStatus = "vipstatus"
+JSONVariablesHighestCheckInStreak = "highest_check_in_streak"
+JSONVariablesHighestCheckInStreakDate = "highest_check_in_streak_date"
 
 # Configuration of twitch api urls
 # Example cURL: curl -X GET -H 'Accept: application/vnd.twitchtv.v5+json' -v -i 'https://api.twitch.tv/kraken/channels/159000697/videos?limit=10&client_id=znnnk0lduw7lsppls5v8kpo9zvfcvd'
@@ -63,7 +69,9 @@ ResponseResetAfterReconnect = "Okay, I've reset the checkins from last stream to
 CommandResetCheckIns = "!resetvipcheckins"
 ResponseResetCheckIns = "Okay! Your check ins have been reset and you automatically checked in for this stream. Just send " + CommandVIPCheckIn + " again, the next time you're here again."
 CommandTop10Vipcheckins = "!top10vipcheckins"
-ResponseTop10Vipcheckins = "Alright, here are the top 10 craziest VIPCheckin dudes (THANKS <3): "
+ResponseTop10Vipcheckins = "Alright, here are the top 10 craziest VIPCheckin guys (THANKS <3):"
+CommandTop10VipcheckinsAlltime = "!top10vipcheckinsalltime"
+ResponseTop10VipcheckinsAlltime = "Oh, All-time? Alright, here are the top 10 craziest VIPCheckin guys of ALL-TIME (THANKS <3):"
 
 ResponsePermissionDeniedMod = "Permission denied: You have to be a Moderator to use this command!"
 ResponseOnlyWhenLive = "ERROR: This command is only available, when the stream is live. Sorry!"
