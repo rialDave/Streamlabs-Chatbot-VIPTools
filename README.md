@@ -24,6 +24,9 @@ How to use
 You don't really need to (and can, because there's no config yet) configure much.
 Usage information will be added here later.
 
+**Important:** Don't delete your old VODs (whyever you would). This script is based on the saved VODs and their IDs.
+Maybe there will be a command in the future, to fix the checkins after a VOD was deleted.
+
 Changelog
 ---------
 
