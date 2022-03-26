@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import time
+import codecs
 import collections
 from pprint import pprint
 from shutil import copyfile
@@ -36,14 +37,50 @@ Description = config.Description
 Creator = config.Creator
 Version = config.Version
 
+
+#---------------------------
+#   Log helper (For logging into Script Logs of the Chatbot)
+#   Note that you need to pass the "Parent" object and use the normal "Parent.Log" function if you want to log something inside of a module
+#---------------------------
+def Log(message):
+    Parent.Log(ScriptName, str(message))
+    return
+
+#---------------------------------------
+# Settings functions
+#---------------------------------------
+class Settings:
+    SettingsFile = config.SettingsFile
+    # Loads settings from file if file is found if not uses default values
+
+    # The 'default' variable names need to match UI_Config
+    def __init__(self, SettingsFile=None):
+        if SettingsFile and os.path.isfile(SettingsFile):
+            with codecs.open(SettingsFile, encoding='utf-8-sig', mode='r') as f:
+                self.__dict__ = json.load(f, encoding='utf-8-sig')
+
+    # Reload settings on save through UI
+    def ReloadSettings(self, jsonData):
+        # Reload settings on save through UI
+        self.__dict__ = json.loads(jsonData, encoding='utf-8-sig')
+        Log("Settings saved")
+        return
+
 #############################################
-# START: Generic Chatbot functions
+# START: Generic but edited Chatbot functions
 #############################################
 
 #---------------------------
 #   [Required] Initialize Data (Only called on load of script)
 #---------------------------
 def Init():
+    # Load in saved settings
+    global UserSettings
+    global Parent
+
+    UserSettings = Settings(config.SettingsFile)
+    Log("Settings loaded")
+
     # generate data and archive directory if they don't exist (uses VipdataBackupPath because it includes the data path)
     if (False == os.path.isdir(config.VipdataBackupPath)):
         os.makedirs(config.VipdataBackupPath)
@@ -54,7 +91,11 @@ def Init():
         data = {}
         with open(config.VipdataFilepath, 'w') as f:
             json.dump(data, f, indent=4)
-    
+
+    # Check and refresh access token
+    twitchLib.CheckAndRefreshAccessToken(Parent, UserSettings)
+    Log("Checked and refreshed Twitch access token if needed")
+
     Log("Script successfully initialized")
 
     return
@@ -63,12 +104,11 @@ def Init():
 #   [Required] Execute Data / Process messages
 #---------------------------
 def Execute(data):
-    currentStreamObjectStorage = twitchLib.GetTwitchApiResponse(config.ApiUrlCurrentStream, Parent)
-    currentStreamObject = twitchLib.GetStreamObjectByObjectStorage(currentStreamObjectStorage)
-
     # call parse function if any of our defined commands is called
     # vipcheckin command called
     if (data.IsChatMessage() and data.GetParam(0).lower() == config.CommandVIPCheckIn):
+        currentStreamObject = twitchLib.GetCurrentStreamObject(Parent, UserSettings)
+
         if (currentStreamObject == None):
             Parent.SendStreamMessage(config.ResponseOnlyWhenLive)
             return
@@ -78,6 +118,8 @@ def Execute(data):
 
     # reset after reconnect command called
     if (data.IsChatMessage() and data.GetParam(0).lower() == config.CommandResetAfterReconnect):
+        currentStreamObject = twitchLib.GetCurrentStreamObject(Parent, UserSettings)
+
         if (currentStreamObject == None):
             Parent.SendStreamMessage(config.ResponseOnlyWhenLive)
             return
@@ -92,6 +134,8 @@ def Execute(data):
 
     # reset checkIns command called
     if (data.IsChatMessage() and data.GetParam(0).lower() == config.CommandResetCheckIns):
+        currentStreamObject = twitchLib.GetCurrentStreamObject(Parent, UserSettings)
+
         if (currentStreamObject == None):
             Parent.SendStreamMessage(config.ResponseOnlyWhenLive)
             return
@@ -151,7 +195,9 @@ def Parse(parseString, command, data):
 #   [Optional] Reload Settings (Called when a user clicks the Save Settings button in the Chatbot UI)
 #---------------------------
 def ReloadSettings(jsonData):
-    return
+    # Reload saved settings
+    UserSettings.ReloadSettings(jsonData)
+    # End of ReloadSettings
 
 #---------------------------
 #   [Optional] Unload (Called when a user reloads their scripts or closes the bot / cleanup stuff)
@@ -172,14 +218,6 @@ def ScriptToggled(state):
 #############################################
 
 #---------------------------
-#   Log helper (For logging into Script Logs of the Chatbot)
-#   Note that you need to pass the "Parent" object and use the normal "Parent.Log" function if you want to log something inside of a module
-#---------------------------
-def Log(message):
-    Parent.Log(ScriptName, str(message))
-    return
-
-#---------------------------
 #   UpdateDataFile: Function for modfiying the file which contains the data, see data/vipdata.json
 #   returns the parseString for parse(Function)
 #---------------------------
@@ -196,7 +234,7 @@ def UpdateDataFile(username):
             data[str(username.lower())] = {}
             data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent, UserSettings)
             data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
             data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = 1
             data[str(username.lower())][config.JSONVariablesHighestCheckInStreakDate] = currentday
@@ -220,7 +258,7 @@ def UpdateDataFile(username):
                     if (True == EqualsLastCheckinGivenStreamByListId(username, 1)):
                         data[str(username.lower())][config.JSONVariablesCheckInsInARow] += 1
                         data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-                        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+                        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent, UserSettings)
                         # only count highest streak counter up if it's actually lower than the checkins
                         if (data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
                             data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] = data[str(username.lower())][config.JSONVariablesCheckInsInARow]
@@ -232,7 +270,7 @@ def UpdateDataFile(username):
                         if (GetJoker(username) > 0):
                             data[str(username.lower())][config.JSONVariablesCheckInsInARow] += 1
                             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent, UserSettings)
                             data[str(username.lower())][config.JSONVariablesRemainingJoker] -= 1
                             # only count highest streak counter up if it's actually lower than the checkins
                             if (data[str(username.lower())][config.JSONVariablesHighestCheckInStreak] < data[str(username.lower())][config.JSONVariablesCheckInsInARow]):
@@ -243,7 +281,7 @@ def UpdateDataFile(username):
                         else:
                             data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
                             data[str(username.lower())][config.JSONVariablesLastCheckIn] = currentday
-                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+                            data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent, UserSettings)
                             data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
 
                             response = "Daaamn " + username + ", you wasted all your jokers. Now you're starting from scratch! Come join again the next time and don't miss a stream again! "
@@ -283,7 +321,7 @@ def IsNewStream(username):
         data = json.load(f)
 
         lastCheckInStreamId = data[str(username.lower())][config.JSONVariablesLastCheckInStreamId]
-        currentStreamId = twitchLib.GetCurrentStreamId(Parent)
+        currentStreamId = twitchLib.GetCurrentStreamId(Parent, UserSettings)
 
         if (currentStreamId != lastCheckInStreamId):
             return True
@@ -299,7 +337,8 @@ def EqualsLastCheckinGivenStreamByListId(username, listId):
         data = json.load(f)
 
         lastCheckInStreamId = data[str(username.lower())][config.JSONVariablesLastCheckInStreamId]
-        secondLastStreamId = twitchLib.GetAttributeByVideoListId("broadcast_id", listId, Parent)
+        secondLastStreamId = twitchLib.GetAttributeByVideoListId("stream_id", listId, Parent, UserSettings)
+        secondLastStreamId = twitchLib.GetAttributeByVideoListId("stream_id", listId, Parent, UserSettings)
 
         if (secondLastStreamId == lastCheckInStreamId):
             return True
@@ -370,14 +409,14 @@ def FixDatafileAfterReconnect():
             if (EqualsLastCheckinGivenStreamByListId(user.lower(), 1) == True):
                 Log('This user checked in, in the last stream object and will be reset:')
                 Log(user)
-                data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+                data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent, UserSettings)
                 data[user][config.JSONVariablesLastCheckIn] = miscLib.GetCurrentDayFormattedDate()
             # if user didn't check in before reconnection, but checked in in the last real stream (second last stream)
             if (EqualsLastCheckinGivenStreamByListId(user.lower(), 2) == True):
                 Log('This User checked in in the second last stream object and will be reset:')
                 Log(user)
-                data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetAttributeByVideoListId("broadcast_id", 1, Parent)
-                data[user][config.JSONVariablesLastCheckIn] = twitchLib.GetAttributeByVideoListId("recorded_at", 1, Parent)[0:10] # only use the first 10 digits, because working with RFC3339 in python is......
+                data[user][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetAttributeByVideoListId("stream_id", 1, Parent, UserSettings)
+                data[user][config.JSONVariablesLastCheckIn] = twitchLib.GetAttributeByVideoListId("created_at", 1, Parent, UserSettings)[0:10] # only use the first 10 digits, because working with RFC3339 in python is......
                 
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
@@ -417,7 +456,7 @@ def ResetCheckinsForUser(username):
 
         data[str(username.lower())][config.JSONVariablesCheckInsInARow] = 1
         data[str(username.lower())][config.JSONVariablesLastCheckIn] = miscLib.GetCurrentDayFormattedDate()
-        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent)
+        data[str(username.lower())][config.JSONVariablesLastCheckInStreamId] = twitchLib.GetCurrentStreamId(Parent, UserSettings)
         data[str(username.lower())][config.JSONVariablesRemainingJoker] = 2
 
     # after everything was modified and updated, we need to write the stuff from our "data" variable to the vipdata.json file     
@@ -511,6 +550,8 @@ def GetTop10VipcheckinsWithData(alltime):
 #
 # Checks if there is a user left without alltime checkins (highest checkin streak) set and fixes it.
 # Returns true, if successfull
+# 
+# ToDo: Meeseeks-Code -> Delete it since it's not actively useful?
 #---------------------------
 def CheckAndFixAlltimeCheckins():
     returnStatus = False
@@ -535,3 +576,17 @@ def CheckAndFixAlltimeCheckins():
         json.dump(data, f, indent=4)
 
     return returnStatus
+
+
+
+#---------------------------
+# Helpful links / UI buttons
+#---------------------------
+def OpenLink(link):
+    os.system("explorer " + link)
+
+def LinkChannelId():
+    OpenLink("https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/")
+
+def LinkDevDashboard():
+    OpenLink("https://dev.twitch.tv/console/apps")

@@ -1,0 +1,40 @@
+{
+  "output_file": "settings.json",
+  "ChannelId": {
+    "type": "textbox",
+    "value": "",
+    "label": "ChannelId",
+    "tooltip": "The Channel-ID of your Twitch-Channel (See links below how to get it)",
+    "group": "General"
+  },
+  "AppClientId": {
+    "type": "textbox",
+    "value": "",
+    "label": "AppClientId",
+    "tooltip": "The App ClientId of your Twitch App (get it from https://dev.twitch.tv/console/apps)",
+    "group": "General"
+  },
+  "AppSecret": {
+    "type": "textbox",
+    "value": "",
+    "label": "AppSecret",
+    "tooltip": "The App Secret of your Twitch App (get it from https://dev.twitch.tv/console/apps)",
+    "group": "General"
+  },
+  "LinkChannelId": {
+    "type": "button",
+    "label": "Get your Channel-ID",
+    "tooltip": "Opens https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/ in the default browser to get your Channel ID",
+    "function": "LinkChannelId",
+    "wsevent": "",
+    "group": "Twitch / Helpful links"
+  },
+  "LinkDevDashboard": {
+    "type": "button",
+    "label": "Twitch Dev-Dashboard",
+    "tooltip": "Opens https://dev.twitch.tv/console/apps in the default browser to get your App-Information",
+    "function": "LinkDevDashboard",
+    "wsevent": "",
+    "group": "Twitch / Helpful links"
+  }
+}

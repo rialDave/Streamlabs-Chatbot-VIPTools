@@ -14,15 +14,21 @@ Services\Scripts\
 
 2. Create a new Folder called _"VIPTools"_
 3. Drop/clone all of the stuff from this Repository in there
-4. Load the scripts in SL Chatbot and you're good to go!
+4. Load the scripts in SL Chatbot
+5. Important: Set your Channel-ID and API-Credentials in the settings of the script in SL Chatbot
 
 If you're having trouble with loading scripts in the SL Chatbot, see: https://www.youtube.com/watch?v=l3FBpY-0880
 
 How to use
 ------------
 
-You don't really need to (and can, because there's no config yet) configure much.
+You don't really need to configure much besides the credentials mentioned above.
 Usage information will be added here later.
+
+**Important:** Don't delete your old VODs (whyever you would). This script is based on the saved VODs and their IDs.
+Maybe there will be a command in the future, to fix the checkins after a VOD was deleted.
+
+This Script only works when you have activated the saving of your past streams as VODs on Twitch.
 
 Changelog
 ---------
@@ -84,6 +90,12 @@ Changelog
   * Added new feature: Top10VipcheckinsAlltime command to view the ALL-TIME top checkins with date of last highest streak checkin
   * Some adjustments on readme and config file
 
+**v1.0.0**
+
+  * BREAKING: Switches/Migrates to the new and currently supported Twitch API (Helix).
+  * From now on you have to set up your twitch dev application and set the credentials in the script settings!
+  * Since the script settings are introduced now, we could provide further customization options in the future
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
@@ -97,7 +109,7 @@ Changelog
   * <s>Feature: Top10VipCheckins or something similar</s>
   * <s>Feature: Log highest checkinstreak in vipdata file (with date of last checkin of that streak)</s>
   * Replace "in a row" with dynamic response (only if it's more then 1 checkIn in a row)
-  * Clean up config file / make adjustable in chatbot settings
+  * <s>Clean up config file / make adjustable in chatbot settings</s>
+  * Make (all/some) texts localizable in settings?
   * Extend documentation in readme file
   * Automatically set as VIP for the channel when goal reached (only the streamer account can do this, so the script needs to send a command as streamer in the chat. Needs to be researched if this is possible via Twitch API)
-  * Integrate codacy code checking and badge

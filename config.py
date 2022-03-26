@@ -13,12 +13,13 @@ ScriptName = "♦ VIPTools"
 Website = "https://twitch.tv/rialDave/"
 Description = "Adds new features for Twitchs VIP functionality (Users can check-in every time you stream to earn the badge)"
 Creator = "rialDave"
-Version = "0.7.0"
+Version = "0.7.0-dev"
 
 #---------------------------
 #   Global Variables
 #   Some stuff from here should be moved to a GUI settings file later
 #---------------------------
+
 VipdataFolder = "data"
 VipdataFilename = "vipdata.json"
 VipdataFilepath = os.path.join(ROOT_DIR, VipdataFolder, VipdataFilename)
@@ -26,13 +27,15 @@ VipdataBackupFolder = "archive" # inside data path
 VipdataBackupFilePrefix = "vipdata_bak-"
 VipdataBackupPath = os.path.join(ROOT_DIR, VipdataFolder, VipdataBackupFolder)
 
+SettingsFile = os.path.join(os.path.dirname(__file__), "settings.json")
+
+TokenFile = os.path.join(os.path.dirname(__file__), "token.txt")
+
 VariableChannelName = "$channelName"
 VariableUser = "$user"
 VariableCheckInCount = "$checkInCount"
 VariableCheckInCountReadable = "$checkInCountReadable"
 VariableNeededCheckins = "$neededCheckIns"
-ChannelId = "159000697"
-AppClientId = "znnnk0lduw7lsppls5v8kpo9zvfcvd"
 VIPStatusLocalization = {
     0: "No VIP",
     1: "VIP - but you can go on collecting check ins, if you want. Thank you for always being here! <3"
@@ -52,12 +55,6 @@ JSONVariablesVIPStatus = "vipstatus"
 JSONVariablesHighestCheckInStreak = "highest_check_in_streak"
 JSONVariablesHighestCheckInStreakDate = "highest_check_in_streak_date"
 
-# Configuration of twitch api urls
-# Example cURL: curl -X GET -H 'Accept: application/vnd.twitchtv.v5+json' -v -i 'https://api.twitch.tv/kraken/channels/159000697/videos?limit=10&client_id=znnnk0lduw7lsppls5v8kpo9zvfcvd'
-ApiUrlLastStream = str("https://api.twitch.tv/kraken/channels/" + ChannelId + "/videos?limit=" + ApiVideoLimit + "&client_id=" + AppClientId)
-# Example cURL: curl -X GET -H 'Accept: application/vnd.twitchtv.v5+json' -v -i 'https://api.twitch.tv/kraken/streams/159000697?client_id=znnnk0lduw7lsppls5v8kpo9zvfcvd'
-ApiUrlCurrentStream = str("https://api.twitch.tv/kraken/streams/" + ChannelId + "?client_id=" + AppClientId)
-
 #---------------------------
 #   Command settings and responses (caution: some of the response texts are overwritten later / not refactored yet)
 #---------------------------
@@ -75,3 +72,7 @@ ResponseTop10VipcheckinsAlltime = "Oh, All-time? Alright, here are the top 10 cr
 
 ResponsePermissionDeniedMod = "Permission denied: You have to be a Moderator to use this command!"
 ResponseOnlyWhenLive = "ERROR: This command is only available, when the stream is live. Sorry!"
+
+# Twitch API-URLs
+ApiUrlCurrentStream = "https://api.twitch.tv/helix/streams"
+ApiUrlLastStreamsBase = "https://api.twitch.tv/helix/videos?limit=" + ApiVideoLimit
