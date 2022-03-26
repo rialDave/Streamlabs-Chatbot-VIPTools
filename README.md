@@ -90,6 +90,12 @@ Changelog
   * Added new feature: Top10VipcheckinsAlltime command to view the ALL-TIME top checkins with date of last highest streak checkin
   * Some adjustments on readme and config file
 
+**v1.0.0**
+
+  * BREAKING: Switches/Migrates to the new and currently supported Twitch API (Helix).
+  * From now on you have to set up your twitch dev application and set the credentials in the script settings!
+  * Since the script settings are introduced now, we could provide further customization options in the future
+
 **Basic ideas and todo list while further developing this tool (in planned priority order)**
 
   * <s>Set up initial project on github</s>
